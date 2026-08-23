@@ -1,0 +1,11 @@
+{
+  "title": "VS Code & ROS 2 Workspace Configuration",
+  "summary": "Build environment, include paths, and ROS 2 Lyrical configuration settings from .antigravity folder.",
+  "last_updated": "2026-04-21T05:28:50Z",
+  "references": [
+    "file:///root/ros2_ws/.vscode/c_cpp_properties.json",
+    "file:///root/ros2_ws/.vscode/settings.json",
+    "file:///root/ros2_ws/.vscode/launch.json",
+    "file:///root/ros2_ws/.vscode/tasks.json"
+  ]
+}

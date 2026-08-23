@@ -1,0 +1,32 @@
+{
+    // --- Python & Pyrefly ---
+    "python.languageServer": "Default",
+    "python.pyrefly.typeCheckingMode": "default",
+    "python.pyrefly.disableTypeErrors": false,
+    "python.REPL.enableREPLSmartSend": false,
+    // --- C++ & Clangd ---
+    "C_Cpp.intelliSenseEngine": "disabled",
+    "clangd.arguments": [
+        "--compile-commands-dir=${workspaceFolder}/build",
+        "--header-insertion=never",
+        "--all-scopes-completion",
+        "--completion-style=detailed"
+    ],
+    // --- ROS 2 Specifics ---
+    "ROS2.distro": "lyrical",
+    "cmake.ignoreCMakeListsMissing": true,
+    // --- Performance & UI ---
+    "explorer.confirmDelete": false,
+    "git.autofetch": true,
+    "files.exclude": {
+        "**/build": true,
+        "**/install": true,
+        "**/log": true,
+        "**/__pycache__": true
+    },
+    "search.exclude": {
+        "**/build": true,
+        "**/install": true,
+        "**/log": true
+    }
+}
