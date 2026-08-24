@@ -38,5 +38,12 @@
         "/opt/ros/lyrical/opt/gz_msgs_vendor/lib/python",
         "/opt/ros/lyrical/opt/gz_math_vendor/lib/python",
         "/opt/ros/lyrical/lib/python3.14/site-packages"
-    ]
+    ],
+ 
+    // urdf-visualizer extention settings
+    "urdf-visualizer.packages": {
+        "gizmo_description": "/root/ros2_ws/src/gizmo/gizmo_description"
+    }
+    // urdf-visualizer extention settings
+
 }
