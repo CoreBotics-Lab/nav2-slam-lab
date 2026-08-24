@@ -9,3 +9,4 @@ __pycache__/
 
 # IDE database files
 .vscode/browse.vc.db
+onshape_venv/
