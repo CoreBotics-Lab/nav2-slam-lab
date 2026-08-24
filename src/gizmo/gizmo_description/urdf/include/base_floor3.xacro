@@ -9,6 +9,7 @@
 
     <!-- Link base_floor3 -->
     <link name="base_floor3">
+    
         <xacro:cylinder_inertia m="${base_floor3_m}" r="${base_floor3_r}" h="${base_floor3_h}" o_xyz="${base_floor3_o_xyz}" o_rpy="${base_floor3_o_rpy}"/>
         
         <collision>
@@ -20,7 +21,7 @@
 
         <!-- Part base_floor_3 -->
         <visual>
-            <origin xyz="0 0 0" rpy="0 -0 0"/>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
             <geometry>
                 <mesh filename="package://gizmo_description/meshes/base_floor_3.stl"/>
             </geometry>
@@ -31,7 +32,7 @@
 
         <!-- Part bn_1593_1348663_hexagon_socket_button_head_screw_m3x6_13 -->
         <visual>
-        <origin xyz="-0.0406106 -0.0507522 0.002" rpy="-0 1.5708 0"/>
+        <origin xyz="-0.0406106 -0.0507522 0.002" rpy="0 ${pi/2} 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/bn_1593_1348663_hexagon_socket_button_head_screw_m3x6.stl"/>
         </geometry>
@@ -42,7 +43,7 @@
         
         <!-- Part bn_1593_1348663_hexagon_socket_button_head_screw_m3x6_14 -->
         <visual>
-        <origin xyz="-0.0406106 0.0507522 0.002" rpy="-0 1.5708 0"/>
+        <origin xyz="-0.0406106 0.0507522 0.002" rpy="0 ${pi/2} 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/bn_1593_1348663_hexagon_socket_button_head_screw_m3x6.stl"/>
         </geometry>

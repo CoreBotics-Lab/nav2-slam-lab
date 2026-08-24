@@ -21,7 +21,7 @@
 
         <!-- Part base_floor_2 -->
         <visual>
-        <origin xyz="0 0 0" rpy="0 -0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/base_floor_2.stl"/>
         </geometry>
@@ -32,7 +32,7 @@
         
         <!-- Part bn_1593_1348663_hexagon_socket_button_head_screw_m3x6_11 -->
         <visual>
-        <origin xyz="-0.0406106 -0.0507522 0.001" rpy="-0 -1.5708 0"/>
+        <origin xyz="-0.0406106 -0.0507522 0.001" rpy="0 -${pi/2} 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/bn_1593_1348663_hexagon_socket_button_head_screw_m3x6.stl"/>
         </geometry>
@@ -43,7 +43,7 @@
         
         <!-- Part face_plate_top -->
         <visual>
-        <origin xyz="0.048 0 0.0035" rpy="0 -0 0"/>
+        <origin xyz="0.048 0 0.0035" rpy="0 0 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/face_plate_top.stl"/>
         </geometry>
@@ -54,7 +54,7 @@
         
         <!-- Part bn_1593_1348663_hexagon_socket_button_head_screw_m3x6_12 -->
         <visual>
-        <origin xyz="-0.0406106 0.0507522 0.001" rpy="-0 -1.5708 0"/>
+        <origin xyz="-0.0406106 0.0507522 0.001" rpy="0 -${pi/2} 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/bn_1593_1348663_hexagon_socket_button_head_screw_m3x6.stl"/>
         </geometry>
@@ -65,7 +65,7 @@
         
         <!-- Part standoff_spacer_m3_20mm -->
         <visual>
-        <origin xyz="-0.0406106 0.0507522 0.0035" rpy="0 -0 0"/>
+        <origin xyz="-0.0406106 0.0507522 0.0035" rpy="0 0 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/standoff_spacer_m3_20mm.stl"/>
         </geometry>
@@ -76,7 +76,7 @@
         
         <!-- Part standoff_spacer_m3_20mm_2 -->
         <visual>
-        <origin xyz="-0.0406106 -0.0507522 0.0035" rpy="0 -0 0"/>
+        <origin xyz="-0.0406106 -0.0507522 0.0035" rpy="0 0 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/standoff_spacer_m3_20mm.stl"/>
         </geometry>
@@ -87,7 +87,7 @@
         
         <!-- Part mcu_controller -->
         <visual>
-        <origin xyz="0 0 0.0035" rpy="0 -0 0"/>
+        <origin xyz="0 0 0.0035" rpy="0 0 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/mcu_controller.stl"/>
         </geometry>

@@ -9,6 +9,7 @@
 
     <!-- Link caster_wheel -->
     <link name="caster_wheel">
+    
         <xacro:sphere_inertia m="${caster_wheel_m}" r="${caster_wheel_r}" o_xyz="${caster_wheel_o_xyz}" o_rpy="${caster_wheel_o_rpy}"/> 
         
         <collision>
@@ -20,7 +21,7 @@
 
         <!-- Part caster_ball -->
         <visual>
-        <origin xyz="0 0 0" rpy="0 -0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/caster_ball.stl"/>
         </geometry>
@@ -31,7 +32,7 @@
 
         <!-- Part caster_frame -->
         <visual>
-        <origin xyz="0 0 0" rpy="0 -0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
         <geometry>
             <mesh filename="package://gizmo_description/meshes/caster_frame.stl"/>
         </geometry>
