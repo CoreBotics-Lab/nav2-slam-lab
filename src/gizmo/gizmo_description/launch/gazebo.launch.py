@@ -21,7 +21,7 @@ def generate_launch_description():
     default_rviz_config = os.path.join(
         get_package_share_directory('gizmo_description'),
         'rviz',
-        'display.rviz'
+        'gazebo.rviz'
     )
     launch_arg_rviz_config = DeclareLaunchArgument(
         'rviz_config',
