@@ -30,6 +30,13 @@ def generate_launch_description():
     )
     rviz_config = LaunchConfiguration('rviz_config')
 
+    launch_arg_world_file = DeclareLaunchArgument(
+        'world_file',
+        default_value='empty.sdf',
+        description='Gazebo world file name or full path (e.g. empty.sdf).'
+    )
+    world_file = LaunchConfiguration('world_file')
+
     gizmo_package_dir = get_package_share_directory('gizmo_description')
     ros_gz_package_dir = get_package_share_directory('ros_gz_sim')
     
@@ -98,7 +105,7 @@ def generate_launch_description():
             'gz_args': [
                 '-r ', 
                 PythonExpression(["'-s ' if '", LaunchConfiguration('headless'), "'.lower() == 'true' else ''"]), 
-                'empty.sdf'
+                world_file
             ],
             'on_exit_shutdown': 'true'
         }.items()
@@ -121,6 +128,7 @@ def generate_launch_description():
     return LaunchDescription([
         launch_arg_headless,
         launch_arg_rviz_config,
+        launch_arg_world_file,
         env_gz_resource_path,
         gazebo_clock_bridge,
         gz_sim,
