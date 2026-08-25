@@ -109,15 +109,25 @@ MainWindow::MainWindow(std::shared_ptr<JoyNode> node)
     topic_input_->setText(QString::fromStdString(topic));
   };
   node_->gui_update_linear_cb = [this](double val) {
-    linear_input_->setValue(val);
-    onJoystickMoved(current_x_, current_y_);
+    if (std::abs(linear_input_->value() - val) > 1e-4) {
+      linear_input_->blockSignals(true);
+      linear_input_->setValue(val);
+      linear_input_->blockSignals(false);
+      onJoystickMoved(current_x_, current_y_);
+    }
   };
   node_->gui_update_angular_cb = [this](double val) {
-    angular_input_->setValue(val);
-    onJoystickMoved(current_x_, current_y_);
+    if (std::abs(angular_input_->value() - val) > 1e-4) {
+      angular_input_->blockSignals(true);
+      angular_input_->setValue(val);
+      angular_input_->blockSignals(false);
+      onJoystickMoved(current_x_, current_y_);
+    }
   };
   node_->gui_update_twist_stamped_cb = [this](bool enabled) {
+    twist_stamped_cb_->blockSignals(true);
     twist_stamped_cb_->setChecked(enabled);
+    twist_stamped_cb_->blockSignals(false);
   };
 
   // Timers
