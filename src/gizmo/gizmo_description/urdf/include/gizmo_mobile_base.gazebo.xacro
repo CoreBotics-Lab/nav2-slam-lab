@@ -5,8 +5,8 @@
 
     <!-- Left Wheel Surface Friction & Contact Stability -->
     <gazebo reference="wheel_left">
-        <mu1>1.0</mu1>
-        <mu2>1.0</mu2>
+        <mu1>1000000000000000.0</mu1>
+        <mu2>1000000000000000.0</mu2>
         <kp>1000000000000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
@@ -16,8 +16,8 @@
 
     <!-- Right Wheel Surface Friction & Contact Stability -->
     <gazebo reference="wheel_right">
-        <mu1>1.0</mu1>
-        <mu2>1.0</mu2>
+        <mu1>1000000000000000.0</mu1>
+        <mu2>1000000000000000.0</mu2>
         <kp>1000000000000.0</kp>
         <kd>10.0</kd>
         <minDepth>0.001</minDepth>
@@ -47,11 +47,11 @@
             <wheel_radius>${wheel_radius}</wheel_radius>
 
             <!-- Limits & Acceleration -->
-            <max_linear_acceleration>1.0</max_linear_acceleration>
-            <min_linear_acceleration>-1.0</min_linear_acceleration>
-            <max_angular_acceleration>2.0</max_angular_acceleration>
-            <min_angular_acceleration>-2.0</min_angular_acceleration>
-            <max_torque>10.0</max_torque>
+            <max_linear_acceleration>10.0</max_linear_acceleration>
+            <min_linear_acceleration>-10.0</min_linear_acceleration>
+            <max_angular_acceleration>20.0</max_angular_acceleration>
+            <min_angular_acceleration>-20.0</min_angular_acceleration>
+            <max_torque>50.0</max_torque>
 
             <!-- Topics & Frames -->
             <topic>/cmd_vel</topic>
