@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+    <xacro:include filename="$(find gizmo_description)/urdf/include/inertial_function_macros.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/lidar.xacro" />
+
+    <!-- lidar properties -->
+    <xacro:property name="base_floor3_lidar_o_xyz" value="0 0 0.003" />
+    <xacro:property name="base_floor3_lidar_o_rpy" value="0 0 0" />
+    <xacro:property name="lidar_scan_frame_o_xyz" value="0 0 0.031" />
+    <xacro:property name="lidar_scan_frame_o_rpy" value="0 0 0" />
+
+    <!-- Joint lidar -->
+    <joint name="lidar_joint" type="fixed">
+        <origin xyz="${base_floor3_lidar_o_xyz}" rpy="${base_floor3_lidar_o_rpy}"/>
+        <parent link="base_floor3"/>
+        <child link="lidar"/>
+    </joint>
+
+    <joint name="scan_frame_joint" type="fixed">
+        <origin xyz="${lidar_scan_frame_o_xyz}" rpy="${lidar_scan_frame_o_rpy}"/>
+        <parent link="lidar"/>
+        <child link="scan_frame"/>
+    </joint>
+
+</robot>

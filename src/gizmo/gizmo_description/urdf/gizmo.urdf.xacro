@@ -3,5 +3,8 @@
 
     <xacro:include filename="$(find gizmo_description)/urdf/include/gizmo_mobile_base.xacro" />
     <xacro:include filename="$(find gizmo_description)/urdf/include/gizmo_mobile_base.gazebo.xacro" />
-    
+
+    <xacro:include filename="$(find gizmo_description)/urdf/include/sensors.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/sensors.gazebo.xacro" />
+
 </robot>
