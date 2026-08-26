@@ -7,6 +7,7 @@
 MainWindow::MainWindow(std::shared_ptr<JoyNode> node)
 : node_(node)
 {
+  executor_.add_node(node_);
   setWindowTitle("ROS 2 Qt6 Joystick (C++)");
   setWindowFlags(windowFlags() | Qt::WindowStaysOnTopHint | Qt::MSWindowsFixedSizeDialogHint);
   setFocusPolicy(Qt::StrongFocus);
@@ -132,9 +133,7 @@ MainWindow::MainWindow(std::shared_ptr<JoyNode> node)
 
   // Timers
   connect(&ros_timer_, &QTimer::timeout, [this]() {
-    rclcpp::executors::SingleThreadedExecutor executor;
-    executor.add_node(node_);
-    executor.spin_some();
+    executor_.spin_some();
   });
   ros_timer_.start(10);  // 100Hz spin
 

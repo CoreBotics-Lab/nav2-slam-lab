@@ -15,6 +15,8 @@
 #include "gizmo_teleop/joy_node.hpp"
 #include "gizmo_teleop/joystick_widget.hpp"
 
+#include <rclcpp/executors/single_threaded_executor.hpp>
+
 class MainWindow : public QMainWindow
 {
   Q_OBJECT
@@ -64,6 +66,7 @@ private:
 
   QTimer ros_timer_;
   QTimer settings_timer_;
+  rclcpp::executors::SingleThreadedExecutor executor_;
 
   QSet<int> keys_pressed_;
   double current_x_{0.0};
