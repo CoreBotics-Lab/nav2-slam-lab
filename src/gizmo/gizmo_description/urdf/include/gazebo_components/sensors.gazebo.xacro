@@ -10,7 +10,8 @@
 
     <!-- lidar plugin -->
     <xacro:include filename="$(find gizmo_description)/urdf/include/gazebo_components/lidar.gazebo.xacro" />
-    
 
+    <!-- camera plugin -->
+    <xacro:include filename="$(find gizmo_description)/urdf/include/gazebo_components/camera.gazebo.xacro" />
     
 </robot>
