@@ -9,7 +9,7 @@
     <xacro:include filename="$(find gizmo_description)/urdf/include/wheel_left.xacro" />
     <xacro:include filename="$(find gizmo_description)/urdf/include/wheel_right.xacro" />
 
-    <xacro:property name="base_footprint_base_floor1_o_xyz" value="0 0 0.01163116" />
+    <xacro:property name="base_footprint_base_floor1_o_xyz" value="0 0 0.01513116" />
     <xacro:property name="base_floor1_base_floor2_o_xyz" value="0 0 0.03350000" />
     <xacro:property name="base_floor2_base_floor3_o_xyz" value="0 0 0.02350000" />
     <xacro:property name="base_floor1_caster_wheel_o_xyz" value="-0.0556106 -0 0.0035" />
