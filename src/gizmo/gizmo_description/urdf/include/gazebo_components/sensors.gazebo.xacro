@@ -14,4 +14,7 @@
     <!-- camera plugin -->
     <xacro:include filename="$(find gizmo_description)/urdf/include/gazebo_components/camera.gazebo.xacro" />
     
+    <!-- imu plugin -->
+    <xacro:include filename="$(find gizmo_description)/urdf/include/gazebo_components/imu.gazebo.xacro" />
+
 </robot>
