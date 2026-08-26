@@ -52,12 +52,20 @@ def generate_launch_description():
         ]
     )
 
+    launch_arg_camera_type = DeclareLaunchArgument(
+        'camera_type',
+        default_value='camera',
+        description="Gazebo camera sensor plugin type. Options: 'camera' (2D RGB) or 'depth_camera' (3D RGB-D / PointCloud2)."
+    )
+    camera_type = LaunchConfiguration('camera_type')
+
     xacro_file_path = os.path.join(gizmo_package_dir, 'urdf', 'gizmo.urdf.xacro')
 
     robot_description = ParameterValue(
         Command([
             'xacro ',
             xacro_file_path,
+            ' camera_type:=', camera_type
         ]),
         value_type=str
     )
@@ -129,6 +137,7 @@ def generate_launch_description():
         launch_arg_headless,
         launch_arg_rviz_config,
         launch_arg_world_file,
+        launch_arg_camera_type,
         env_gz_resource_path,
         gazebo_clock_bridge,
         gz_sim,
