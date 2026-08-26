@@ -9,7 +9,7 @@
     </gazebo>
 
     <!-- lidar plugin -->
-    <xacro:include filename="$(find gizmo_description)/urdf/include/lidar.gazebo.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/gazebo_components/lidar.gazebo.xacro" />
     
 
     

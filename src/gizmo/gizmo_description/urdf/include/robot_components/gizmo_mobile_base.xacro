@@ -1,13 +1,13 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
 
-    <xacro:include filename="$(find gizmo_description)/urdf/include/inertial_function_macros.xacro" />
-    <xacro:include filename="$(find gizmo_description)/urdf/include/base_floor1.xacro" />
-    <xacro:include filename="$(find gizmo_description)/urdf/include/base_floor2.xacro" />
-    <xacro:include filename="$(find gizmo_description)/urdf/include/base_floor3.xacro" />
-    <xacro:include filename="$(find gizmo_description)/urdf/include/caster_wheel.xacro" />
-    <xacro:include filename="$(find gizmo_description)/urdf/include/wheel_left.xacro" />
-    <xacro:include filename="$(find gizmo_description)/urdf/include/wheel_right.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/robot_components/inertial_function_macros.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/robot_components/base_floor1.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/robot_components/base_floor2.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/robot_components/base_floor3.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/robot_components/caster_wheel.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/robot_components/wheel_left.xacro" />
+    <xacro:include filename="$(find gizmo_description)/urdf/include/robot_components/wheel_right.xacro" />
 
     <xacro:property name="base_footprint_base_floor1_o_xyz" value="0 0 0.01513116" />
     <xacro:property name="base_floor1_base_floor2_o_xyz" value="0 0 0.03350000" />
