@@ -133,6 +133,22 @@ def generate_launch_description():
         output='screen'
     )
 
+    ekf_config_file = os.path.join(
+        gizmo_package_dir,
+        'config', 'ekf.yaml'
+    )
+
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[
+            ekf_config_file,
+            {'use_sim_time': True}
+        ]
+    )
+
     return LaunchDescription([
         launch_arg_headless,
         launch_arg_rviz_config,
@@ -143,5 +159,6 @@ def generate_launch_description():
         gz_sim,
         gz_spawn_entity,
         robot_state_publisher,
+        ekf_node,
         rviz2,
     ])
