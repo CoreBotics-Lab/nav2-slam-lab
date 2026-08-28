@@ -1,16 +1,16 @@
 import os
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
-from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression, Command
-
 from launch_ros.parameter_descriptions import ParameterValue
 
 def generate_launch_description():
+    gizmo_gazebo_dir = get_package_share_directory('gizmo_gazebo')
+    gizmo_description_dir = get_package_share_directory('gizmo_description')
+    ros_gz_package_dir = get_package_share_directory('ros_gz_sim')
 
     launch_arg_headless = DeclareLaunchArgument(
         'headless',
@@ -19,7 +19,7 @@ def generate_launch_description():
     )
 
     default_rviz_config = os.path.join(
-        get_package_share_directory('gizmo_description'),
+        gizmo_gazebo_dir,
         'rviz',
         'gazebo.rviz'
     )
@@ -37,21 +37,6 @@ def generate_launch_description():
     )
     world_file = LaunchConfiguration('world_file')
 
-    gizmo_package_dir = get_package_share_directory('gizmo_description')
-    ros_gz_package_dir = get_package_share_directory('ros_gz_sim')
-    
-    # Configure Gazebo resources to find meshes and models
-    gizmo_parent_dir = os.path.dirname(gizmo_package_dir)
-
-    env_gz_resource_path = SetEnvironmentVariable(
-        name='GZ_SIM_RESOURCE_PATH', 
-        value=[
-            os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
-            os.pathsep,
-            gizmo_parent_dir
-        ]
-    )
-
     launch_arg_camera_type = DeclareLaunchArgument(
         'camera_type',
         default_value='camera',
@@ -59,7 +44,18 @@ def generate_launch_description():
     )
     camera_type = LaunchConfiguration('camera_type')
 
-    xacro_file_path = os.path.join(gizmo_package_dir, 'urdf', 'gizmo.urdf.xacro')
+    gizmo_parent_dir = os.path.dirname(gizmo_description_dir)
+
+    env_gz_resource_path = SetEnvironmentVariable(
+        name='GZ_SIM_RESOURCE_PATH',
+        value=[
+            os.environ.get('GZ_SIM_RESOURCE_PATH', ''),
+            os.pathsep,
+            gizmo_parent_dir
+        ]
+    )
+
+    xacro_file_path = os.path.join(gizmo_description_dir, 'urdf', 'gizmo.urdf.xacro')
 
     robot_description = ParameterValue(
         Command([
@@ -71,25 +67,26 @@ def generate_launch_description():
     )
 
     robot_state_publisher = Node(
-        package = 'robot_state_publisher',
-        executable = 'robot_state_publisher',
-        name = 'robot_state_publisher',
-        output = 'screen',
-        parameters = [
-            {'robot_description': robot_description}
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[
+            {'robot_description': robot_description, 'use_sim_time': True}
         ]
     )
-    
+
     rviz2 = Node(
-        package = 'rviz2',
-        executable = 'rviz2',
-        name = 'rviz2',
-        output = 'screen',
-        arguments = ['-d', rviz_config]
+        package='rviz2',
+        executable='rviz2',
+        name='rviz2',
+        output='screen',
+        arguments=['-d', rviz_config],
+        parameters=[{'use_sim_time': True}]
     )
 
     bridge_config_file = os.path.join(
-        gizmo_package_dir,
+        gizmo_gazebo_dir,
         'config', 'ros_gz_bridge_config.yaml'
     )
 
@@ -104,15 +101,14 @@ def generate_launch_description():
         }]
     )
 
-    # Pass '-s ' (server only) if headless is True, otherwise pass empty string to run both by default.
     gz_sim = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             PathJoinSubstitution([ros_gz_package_dir, 'launch', 'gz_sim.launch.py'])
         ),
         launch_arguments={
             'gz_args': [
-                '-r ', 
-                PythonExpression(["'-s ' if '", LaunchConfiguration('headless'), "'.lower() == 'true' else ''"]), 
+                '-r ',
+                PythonExpression(["'-s ' if '", LaunchConfiguration('headless'), "'.lower() == 'true' else ''"]),
                 world_file
             ],
             'on_exit_shutdown': 'true'
@@ -128,13 +124,13 @@ def generate_launch_description():
             '-y', '0.0',
             '-z', '0.1',
             '-topic', 'robot_description',
-            '-world', 'empty' 
+            '-world', 'empty'
         ],
         output='screen'
     )
 
     ekf_config_file = os.path.join(
-        gizmo_package_dir,
+        gizmo_gazebo_dir,
         'config', 'ekf.yaml'
     )
 
