@@ -133,6 +133,10 @@ MainWindow::MainWindow(std::shared_ptr<JoyNode> node)
 
   // Timers
   connect(&ros_timer_, &QTimer::timeout, [this]() {
+    if (!rclcpp::ok()) {
+      qApp->quit();
+      return;
+    }
     executor_.spin_some();
   });
   ros_timer_.start(10);  // 100Hz spin
