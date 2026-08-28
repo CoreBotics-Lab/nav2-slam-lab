@@ -47,6 +47,10 @@
             <wheel_radius>${wheel_radius}</wheel_radius>
 
             <!-- Limits & Acceleration (Smoothed for smooth braking without wheelie jerk) -->
+            <max_linear_velocity>0.73</max_linear_velocity>
+            <min_linear_velocity>-0.73</min_linear_velocity>
+            <max_angular_velocity>3.14</max_angular_velocity>
+            <min_angular_velocity>-3.14</min_angular_velocity>
             <max_linear_acceleration>2.5</max_linear_acceleration>
             <min_linear_acceleration>-2.5</min_linear_acceleration>
             <max_angular_acceleration>5.0</max_angular_acceleration>
