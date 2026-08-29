@@ -44,6 +44,27 @@ def generate_launch_description():
     )
     camera_type = LaunchConfiguration('camera_type')
 
+    launch_arg_use_lidar = DeclareLaunchArgument(
+        'use_lidar',
+        default_value='true',
+        description='Enable or disable Gazebo lidar plugin'
+    )
+    use_lidar = LaunchConfiguration('use_lidar')
+
+    launch_arg_use_camera = DeclareLaunchArgument(
+        'use_camera',
+        default_value='true',
+        description='Enable or disable Gazebo camera plugin'
+    )
+    use_camera = LaunchConfiguration('use_camera')
+
+    launch_arg_use_imu = DeclareLaunchArgument(
+        'use_imu',
+        default_value='true',
+        description='Enable or disable Gazebo IMU plugin'
+    )
+    use_imu = LaunchConfiguration('use_imu')
+
     gizmo_parent_dir = os.path.dirname(gizmo_description_dir)
 
     env_gz_resource_path = SetEnvironmentVariable(
@@ -61,7 +82,10 @@ def generate_launch_description():
         Command([
             'xacro ',
             xacro_file_path,
-            ' camera_type:=', camera_type
+            ' camera_type:=', camera_type,
+            ' use_lidar:=', use_lidar,
+            ' use_camera:=', use_camera,
+            ' use_imu:=', use_imu
         ]),
         value_type=str
     )
@@ -150,6 +174,9 @@ def generate_launch_description():
         launch_arg_rviz_config,
         launch_arg_world_file,
         launch_arg_camera_type,
+        launch_arg_use_lidar,
+        launch_arg_use_camera,
+        launch_arg_use_imu,
         env_gz_resource_path,
         gazebo_clock_bridge,
         gz_sim,

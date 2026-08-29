@@ -18,7 +18,8 @@ def generate_launch_description():
             os.path.join(gizmo_gazebo_dir, 'launch', 'gazebo.launch.py')
         ),
         launch_arguments={
-            'world_file': simple_world_path
+            'world_file': simple_world_path,
+            'use_camera': 'false'
         }.items()
     )
     
