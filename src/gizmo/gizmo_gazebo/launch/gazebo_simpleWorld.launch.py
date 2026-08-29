@@ -19,7 +19,8 @@ def generate_launch_description():
         ),
         launch_arguments={
             'world_file': simple_world_path,
-            'use_camera': 'false'
+            'use_camera': 'false',
+            'run_rviz2': 'false'
         }.items()
     )
     

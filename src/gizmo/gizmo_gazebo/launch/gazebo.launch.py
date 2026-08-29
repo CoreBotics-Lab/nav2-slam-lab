@@ -3,6 +3,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression, Command
 from launch_ros.parameter_descriptions import ParameterValue
@@ -11,6 +12,13 @@ def generate_launch_description():
     gizmo_gazebo_dir = get_package_share_directory('gizmo_gazebo')
     gizmo_description_dir = get_package_share_directory('gizmo_description')
     ros_gz_package_dir = get_package_share_directory('ros_gz_sim')
+
+    launch_arg_run_rviz2 = DeclareLaunchArgument(
+        'run_rviz2',
+        default_value='true',
+        description='Run RViz2 if true'
+    )
+    run_rviz2 = LaunchConfiguration('run_rviz2')
 
     launch_arg_headless = DeclareLaunchArgument(
         'headless',
@@ -106,7 +114,8 @@ def generate_launch_description():
         name='rviz2',
         output='screen',
         arguments=['-d', rviz_config],
-        parameters=[{'use_sim_time': True}]
+        parameters=[{'use_sim_time': True}],
+        condition=IfCondition(run_rviz2)
     )
 
     bridge_config_file = os.path.join(
@@ -170,6 +179,7 @@ def generate_launch_description():
     )
 
     return LaunchDescription([
+        launch_arg_run_rviz2,
         launch_arg_headless,
         launch_arg_rviz_config,
         launch_arg_world_file,

@@ -2,6 +2,7 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -9,6 +10,13 @@ def generate_launch_description():
     gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
 
     # Launch arguments
+    launch_arg_run_rviz2 = DeclareLaunchArgument(
+        'run_rviz2',
+        default_value='true',
+        description='Run RViz2 if true'
+    )
+    run_rviz2 = LaunchConfiguration('run_rviz2')
+
     launch_arg_use_sim_time = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
@@ -59,14 +67,16 @@ def generate_launch_description():
         name='rviz2',
         output='screen',
         arguments=['-d', rviz_config],
-        parameters=[{'use_sim_time': use_sim_time}]
+        parameters=[{'use_sim_time': use_sim_time}],
+        condition=IfCondition(run_rviz2)
     )
 
     return LaunchDescription([
+        launch_arg_run_rviz2,
         launch_arg_use_sim_time,
         launch_arg_slam_params,
         launch_arg_rviz_config,
         start_async_slam_toolbox_node,
-        # start_rviz2_node
+        start_rviz2_node
     ])
 
