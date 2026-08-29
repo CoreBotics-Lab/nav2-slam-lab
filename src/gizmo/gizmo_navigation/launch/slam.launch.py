@@ -60,6 +60,20 @@ def generate_launch_description():
         ]
     )
 
+    # Lifecycle Manager to automatically configure and activate slam_toolbox
+    start_lifecycle_manager = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_slam',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'autostart': True,
+            'node_names': ['slam_toolbox'],
+            'bond_timeout': 0.0
+        }]
+    )
+
     # RViz2 Node with SLAM layout
     start_rviz2_node = Node(
         package='rviz2',
@@ -77,6 +91,7 @@ def generate_launch_description():
         launch_arg_slam_params,
         launch_arg_rviz_config,
         start_async_slam_toolbox_node,
+        start_lifecycle_manager,
         start_rviz2_node
     ])
 
