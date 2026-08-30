@@ -43,7 +43,15 @@
     // urdf-visualizer extention settings
     "urdf-visualizer.packages": {
         "gizmo_description": "/root/ros2_ws/src/gizmo/gizmo_description"
-    }
+    },
+    "python.analysis.extraPaths": [
+        "/opt/ros/lyrical/opt/gz_sim_vendor/lib/python",
+        "/opt/ros/lyrical/opt/gz_transport_vendor/lib/python",
+        "/opt/ros/lyrical/opt/sdformat_vendor/lib/python",
+        "/opt/ros/lyrical/opt/gz_msgs_vendor/lib/python",
+        "/opt/ros/lyrical/opt/gz_math_vendor/lib/python",
+        "/opt/ros/lyrical/lib/python3.14/site-packages"
+    ]
     // urdf-visualizer extention settings
 
 }
