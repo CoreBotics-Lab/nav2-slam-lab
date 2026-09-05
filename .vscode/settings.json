@@ -17,7 +17,7 @@
     "cmake.ignoreCMakeListsMissing": true,
     // --- Performance & UI ---
     "explorer.confirmDelete": false,
-    "git.autofetch": true,
+    "git.autofetch": false,
     "files.exclude": {
         "**/build": true,
         "**/install": true,
