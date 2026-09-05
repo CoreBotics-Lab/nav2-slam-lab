@@ -23,6 +23,7 @@ setup(
     entry_points={
         'console_scripts': [
             'go_to_goal_slam_toolbox_nav2 = gizmo_scripts.go_to_goal_slam_toolbox_nav2:main',
+            'go_to_goal_amcl_nav2 = gizmo_scripts.go_to_goal_amcl_nav2:main',
         ],
     },
 )
