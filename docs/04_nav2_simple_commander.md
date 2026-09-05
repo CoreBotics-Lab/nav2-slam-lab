@@ -230,30 +230,45 @@ import argparse
 
 parser = argparse.ArgumentParser(
     description='Send Gizmo to a target pose in SLAM Navigation Mode',
-    epilog='Example: ros2 run gizmo_scripts go_to_goal_slam_toolbox -x 1.5 -y 0.5 -yaw 1.57'
+    epilog='Example: ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -x 1.5 -y 0.5 -yaw 1.57'
 )
+# Target destination flags
 parser.add_argument('-x', '--x', type=float, default=2.0, help='Target X coordinate (meters)')
 parser.add_argument('-y', '--y', type=float, default=0.0, help='Target Y coordinate (meters)')
 parser.add_argument('-yaw', '--yaw', type=float, default=0.0, help='Target Yaw orientation (radians)')
 
+# Initial pose flags (AMCL static map mode)
+parser.add_argument('--init-x', type=float, default=0.0, help='Initial X position (meters)')
+parser.add_argument('--init-y', type=float, default=0.0, help='Initial Y position (meters)')
+parser.add_argument('--init-yaw', type=float, default=0.0, help='Initial Yaw angle (radians)')
+
 parsed_args, _ = parser.parse_known_args()
 x, y, yaw = parsed_args.x, parsed_args.y, parsed_args.yaw
+init_x, init_y, init_yaw = parsed_args.init_x, parsed_args.init_y, parsed_args.init_yaw
 ```
+
+> [!NOTE]
+> **How `argparse` Maps Flags to Python Variables (`dest` Rule):**  
+> In Python syntax, a hyphen `-` is a minus sign (so `parsed_args.init-x` is a `SyntaxError`).  
+> `argparse` automatically strips leading `--` and converts all internal hyphens `-` to underscores `_`:  
+> `--init-x` $\longrightarrow$ **`parsed_args.init_x`**  
+> `--init-y` $\longrightarrow$ **`parsed_args.init_y`**  
+> `--init-yaw` $\longrightarrow$ **`parsed_args.init_yaw`**
 
 ### 🚀 CLI Flexibility:
 The user can now command any combination of targets directly:
 ```bash
 # 1. Provide all coordinates
-ros2 run gizmo_scripts go_to_goal_slam_toolbox -x 1.5 -y 0.5 -yaw 1.57
+ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -x 1.5 -y 0.5 -yaw 1.57
 
 # 2. Modify only X (Y and Yaw stay at defaults: 0.0, 0.0)
-ros2 run gizmo_scripts go_to_goal_slam_toolbox -x 3.0
+ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -x 3.0
 
 # 3. Modify only Yaw (Faces North: 90 degrees)
-ros2 run gizmo_scripts go_to_goal_slam_toolbox -yaw 1.57
+ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -yaw 1.57
 
 # 4. Built-in GNU Help Menu
-ros2 run gizmo_scripts go_to_goal_slam_toolbox -- --help
+ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -- --help
 ```
 
 ---
@@ -286,22 +301,40 @@ elif result == TaskResult.FAILED:
 ---
 
 ## 9. Step-by-Step Execution Guide for Gizmo
+ 
+ ### Option A: Online SLAM Autonomous Navigation (No pre-saved map required)
+ 1. **Terminal 1: Gazebo Simulation**
+    ```bash
+    ros2 launch gizmo_gazebo gazebo_simpleWorld.launch.py
+    ```
+ 2. **Terminal 2: Online SLAM Navigation**
+    ```bash
+    ros2 launch gizmo_navigation slam_navigation.launch.py
+    ```
+ 3. **Terminal 3: Python Mission Script**
+    ```bash
+    # Drive to (X=1.5m, Y=0.5m) and face North (Yaw=1.57 rad / 90 deg):
+    ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -x 1.5 -y 0.5 -yaw 1.57
+    ```
 
-### Terminal 1: Launch Gazebo Simulation
-```bash
-ros2 launch gizmo_gazebo gazebo_simpleWorld.launch.py
-```
-*(Wait 3–5 seconds until Gazebo renders and the simulation clock ticks smoothly).*
+---
 
-### Terminal 2: Launch Online SLAM Navigation
-```bash
-ros2 launch gizmo_navigation slam_navigation.launch.py
-```
+### Option B: Static Map Navigation with AMCL (Production Mode)
+ 1. **Terminal 1: Gazebo Simulation**
+    ```bash
+    ros2 launch gizmo_gazebo gazebo_simpleWorld.launch.py
+    ```
+ 2. **Terminal 2: Static Map Navigation Stack**
+    ```bash
+    ros2 launch gizmo_navigation navigation.launch.py
+    ```
+ 3. **Terminal 3: Python Mission Script (with Initial Pose Seeding)**
+    ```bash
+    # If Gizmo is starting at origin (0, 0) and driving to (X=2.0m, Y=0.0m):
+    ros2 run gizmo_scripts go_to_goal_amcl_nav2 -x 2.0 -y 0.0 -yaw 0.0
 
-### Terminal 3: Command Gizmo via Python Mission Script
-```bash
-# Drive to (X=1.5m, Y=0.5m) and face North (Yaw=1.57 rad / 90 deg):
-ros2 run gizmo_scripts go_to_goal_slam_toolbox -x 1.5 -y 0.5 -yaw 1.57
-```
+    # If Gizmo is relocated on the map (e.g. at X=1.0m) and driving to (X=2.0m):
+    ros2 run gizmo_scripts go_to_goal_amcl_nav2 -x 2.0 --init-x 1.0
+    ```
 
-Watch Gizmo autonomously plan a collision-free path, navigate around obstacles, stream live telemetry, and announce mission success! 🤖🏁
+Watch Gizmo autonomously localize its particle swarm, plan a collision-free path on the global costmap, navigate around obstacles, stream live telemetry, and announce mission success! 🤖🏁
