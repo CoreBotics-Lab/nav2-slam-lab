@@ -60,10 +60,13 @@ def generate_launch_description():
     )
     rviz_config = LaunchConfiguration('rviz_config')
 
-    # 2. Lifecycle nodes list (All 7 Nav2 Servers)
-    lifecycle_nodes = [
+    # 2. Lifecycle nodes lists (Standard Nav2 separation)
+    localization_nodes = [
         'map_server',
-        'amcl',
+        'amcl'
+    ]
+
+    navigation_nodes = [
         'controller_server',
         'planner_server',
         'behavior_server',
@@ -159,8 +162,23 @@ def generate_launch_description():
         ]
     )
 
-    # 10. Lifecycle Manager Node
-    lifecycle_manager_node = Node(
+    # 10. Lifecycle Managers (Separate managers for Localization and Navigation)
+    lifecycle_manager_localization_node = Node(
+        package='nav2_lifecycle_manager',
+        executable='lifecycle_manager',
+        name='lifecycle_manager_localization',
+        output='screen',
+        parameters=[{
+            'use_sim_time': use_sim_time,
+            'autostart': True,
+            'node_names': localization_nodes,
+            'bond_timeout': 0.0,
+            'service_timeout': 30.0,
+            'attempt_respawn_reconnection': True
+        }]
+    )
+
+    lifecycle_manager_navigation_node = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
         name='lifecycle_manager_navigation',
@@ -168,8 +186,10 @@ def generate_launch_description():
         parameters=[{
             'use_sim_time': use_sim_time,
             'autostart': True,
-            'node_names': lifecycle_nodes,
-            'bond_timeout': 0.0
+            'node_names': navigation_nodes,
+            'bond_timeout': 0.0,
+            'service_timeout': 30.0,
+            'attempt_respawn_reconnection': True
         }]
     )
 
@@ -197,6 +217,7 @@ def generate_launch_description():
         behavior_server_node,
         bt_navigator_node,
         waypoint_follower_node,
-        lifecycle_manager_node,
+        lifecycle_manager_localization_node,
+        lifecycle_manager_navigation_node,
         rviz2_node
     ])
