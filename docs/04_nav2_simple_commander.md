@@ -189,6 +189,59 @@ When `localizer='slam_toolbox'`, Nav2 verifies `/slam_toolbox/get_state` is `'ac
 
 ---
 
+### 📍 Initial Pose Architecture: Config File (`nav2.yaml`) vs. Python Script (`setInitialPose`)
+
+A critical design choice in AMCL static map navigation is **where** the initial pose should be defined.
+
+#### 1. The Gold Standard: Config File (`nav2.yaml`)
+In [`src/gizmo/gizmo_navigation/config/nav2.yaml`](file:///root/ros2_ws/src/gizmo/gizmo_navigation/config/nav2.yaml#L45-L50):
+```yaml
+amcl:
+  ros__parameters:
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+```
+For production AMRs operating in factories and warehouses, **setting the initial pose in `nav2.yaml` is vastly superior**:
+* **Zero-Touch Autostart:** The robot powers on, boots Gazebo or physical hardware, and AMCL immediately initializes its particle filter at the exact coordinates configured under `initial_pose` in `nav2.yaml` (e.g. at its charging dock or start position).
+* **Immediate TF Stability:** Because AMCL has an initial pose on boot, it immediately broadcasts the `map ➔ odom` transform. `global_costmap` and `planner_server` can initialize without timing out.
+* **No Script Dependency:** Nav2 is immediately in a healthy, active state. You don't need a human clicking "2D Pose Estimate" in RViz or an external Python script just to bring the navigation stack alive.
+
+#### 2. Why the Python Script Seeding is Commented Out in `go_to_goal_amcl_nav2.py`
+For a single robot deployment like Gizmo 2WD, having `set_initial_pose: true` in `nav2.yaml` makes calling `setInitialPose()` in the Python script **completely unnecessary and redundant**:
+* In `nav2.yaml`, AMCL seeds its particle filter automatically at the configured YAML coordinates as soon as it boots up during its lifecycle configuration.
+* Because AMCL is already localized at its configured starting pose from the start, calling `setInitialPose()` in Python adds unnecessary overhead and timing dependencies.
+* Therefore, in [`go_to_goal_amcl_nav2.py`](file:///root/ros2_ws/src/gizmo/gizmo_scripts/gizmo_scripts/go_to_goal_amcl_nav2.py), those lines are intentionally **commented out**:
+  ```python
+  # initial_pose: PoseStamped = _set_pose('map', nav.get_clock().now().to_msg(), init_x, init_y, init_yaw)
+  # nav.setInitialPose(initial_pose)
+  ```
+  The script simply waits for Nav2 to be ready via `nav.waitUntilNav2Active(localizer='amcl')` and immediately sends the goal.
+
+#### 3. When Would You Uncomment or Use `nav.setInitialPose()`?
+You only need to uncomment those lines in Python for specialized multi-robot or relocation scenarios:
+* **Dynamic Relocation:** When Gizmo is physically relocated to a different starting spot on the map, and you pass `--init-x 1.0` from the CLI.
+* **Multi-Robot Fleets:** Where 10 robots share the same `nav2.yaml` configuration, but each robot starts at a unique physical dock $(X_i, Y_i)$ passed as a command-line argument.
+* **Unseeded Maps:** When `set_initial_pose: false` is configured in `nav2.yaml`, requiring an external script or operator to seed AMCL.
+
+#### 4. Why Official Nav2 Sequences `setInitialPose()` BEFORE `waitUntilNav2Active()`
+When you *do* use script-level initial pose seeding, official Nav2 blueprints always place `setInitialPose()` **before** `waitUntilNav2Active()`:
+```python
+# 1. Set initial pose first (stores pose in BasicNavigator and publishes to /initialpose)
+# initial_pose = _set_pose('map', nav.get_clock().now().to_msg(), init_x, init_y, init_yaw)
+# nav.setInitialPose(initial_pose)
+
+# 2. Wait for Nav2 & AMCL to become active
+nav.waitUntilNav2Active(localizer='amcl')
+```
+**Why this order is required:**  
+Inside `BasicNavigator.waitUntilNav2Active(localizer='amcl')`, Nav2 calls `_waitForInitialPose()`. If AMCL hasn't been seeded yet, this function loops and re-publishes `self.initial_pose` until AMCL confirms localization on `/amcl_pose`. If you don't call `setInitialPose()` beforehand, `BasicNavigator` has no pose stored in memory to seed AMCL with!
+
+---
+
 ## 6. Coordinate Geometry: Why `PoseStamped` Rules Nav2
 
 Every position-related function in Nav2 (`goToPose`, `goThroughPoses`, `followWaypoints`, `setInitialPose`) strictly consumes **`geometry_msgs.msg.PoseStamped`**.

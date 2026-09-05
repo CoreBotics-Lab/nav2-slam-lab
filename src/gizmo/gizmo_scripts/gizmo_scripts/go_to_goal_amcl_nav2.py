@@ -67,20 +67,29 @@ def main(args=None):
     # Enable simulation clock synchronization with Gazebo
     nav.set_parameters([rclpy.parameter.Parameter('use_sim_time', rclpy.Parameter.Type.BOOL, True)])
 
-    nav.get_logger().info(f"Setting Initial Pose: X={init_x:.2f} m, Y={init_y:.2f} m, Yaw={init_yaw:.2f} rad")
+    # nav.get_logger().info(f"Setting Initial Pose: X={init_x:.2f} m, Y={init_y:.2f} m, Yaw={init_yaw:.2f} rad")
     nav.get_logger().info(f"Target Goal Position: X={goal_x:.2f} m, Y={goal_y:.2f} m, Yaw={goal_yaw:.2f} rad ({math.degrees(goal_yaw):.1f}°)")
 
-    # 2. Wait for Nav2 & AMCL to become active
+    # 2. Initial Pose Seeding (Handled by nav2.yaml)
+    # --------------------------------------------------------------------------
+    # For a single robot like Gizmo 2WD, setting 'set_initial_pose: true' in
+    # nav2.yaml is far superior to setting it here in Python.
+    # In nav2.yaml, AMCL automatically seeds its particle filter at the configured
+    # initial_pose coordinates (x, y, yaw) as soon as it boots up, immediately establishing
+    # the map -> odom transform without needing external script intervention or timing dependencies.
+    #
+    # The lines below are commented out because nav2.yaml handles it automatically.
+    # Uncomment only if you need to dynamically re-seed AMCL from the CLI
+    # (e.g. multi-robot fleets or starting from an offset dock):
+    #
+    # initial_pose: PoseStamped = _set_pose('map', nav.get_clock().now().to_msg(), init_x, init_y, init_yaw)
+    # nav.setInitialPose(initial_pose)
+    # --------------------------------------------------------------------------
+
+    # 3. Wait for Nav2 & AMCL to become active
+    # Under the hood, waitUntilNav2Active(localizer='amcl') waits for AMCL to transition
+    # to ACTIVE, confirms the initial pose was accepted, and verifies bt_navigator.
     nav.waitUntilNav2Active(localizer='amcl')
-
-    # 3. Set Initial Pose for AMCL (Seeds the Monte Carlo Particle Cloud)
-    import time
-    while nav.count_subscribers('initialpose') == 0:
-        time.sleep(0.1)
-
-    initial_pose: PoseStamped = _set_pose('map', nav.get_clock().now().to_msg(), init_x, init_y, init_yaw)
-    nav.setInitialPose(initial_pose)
-    time.sleep(0.5)  # Allow AMCL to re-seed particle filter
 
     # 4. Define Goal Pose
     goal_pose: PoseStamped = _set_pose('map', nav.get_clock().now().to_msg(), goal_x, goal_y, goal_yaw)
