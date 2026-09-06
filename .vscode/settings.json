@@ -16,8 +16,15 @@
     "ROS2.distro": "lyrical",
     "cmake.ignoreCMakeListsMissing": true,
     // --- Performance & UI ---
-    "explorer.confirmDelete": false,
     "git.autofetch": false,
+    "files.watcherExclude": {
+        "**/.git/objects/**": true,
+        "**/.git/subtree-cache/**": true,
+        "**/build/**": true,
+        "**/install/**": true,
+        "**/log/**": true,
+        "**/__pycache__/**": true
+    },
     "files.exclude": {
         "**/build": true,
         "**/install": true,
