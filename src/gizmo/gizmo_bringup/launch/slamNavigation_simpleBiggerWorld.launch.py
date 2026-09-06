@@ -8,7 +8,7 @@ from launch.substitutions import LaunchConfiguration
 
 def generate_launch_description():
     gizmo_gazebo_dir = get_package_share_directory('gizmo_gazebo')
-    gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
+    gizmo_bringup_dir = get_package_share_directory('gizmo_bringup')
 
     # 1. Declare Launch Arguments
     use_sim_time_arg = DeclareLaunchArgument(
@@ -24,12 +24,13 @@ def generate_launch_description():
         )
     )
 
-    # 3. Online SLAM Toolbox + Nav2 Navigation Stack (always runs RViz2)
+    # 3. Master Bringup in SLAM Mode (Online SLAM + Nav2 + RViz2)
     slam_navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(gizmo_navigation_dir, 'launch', 'slam_navigation.launch.py')
+            os.path.join(gizmo_bringup_dir, 'launch', 'slamNavigation_bringup.launch.py')
         ),
         launch_arguments={
+            'slam': 'true',
             'use_sim_time': LaunchConfiguration('use_sim_time')
         }.items()
     )

@@ -17,57 +17,69 @@ def generate_launch_description():
     )
     use_sim_time = LaunchConfiguration('use_sim_time')
 
-    default_slam_params = os.path.join(
+    default_map_file = os.path.join(
+        gizmo_navigation_dir,
+        'maps',
+        'simple_world_map.yaml'
+    )
+    map_arg = DeclareLaunchArgument(
+        'map',
+        default_value=default_map_file,
+        description='Full path to the map YAML file to load'
+    )
+    map_file = LaunchConfiguration('map')
+
+    default_nav2_params = os.path.join(
         gizmo_navigation_dir,
         'config',
-        'slam_toolbox.yaml'
+        'nav2.yaml'
     )
-    slam_params_file_arg = DeclareLaunchArgument(
-        'slam_params_file',
-        default_value=default_slam_params,
-        description='Full path to the ROS 2 parameters file for slam_toolbox'
+    params_file_arg = DeclareLaunchArgument(
+        'params_file',
+        default_value=default_nav2_params,
+        description='Full path to the Nav2 parameters YAML file'
     )
-    slam_params_file = LaunchConfiguration('slam_params_file')
+    params_file = LaunchConfiguration('params_file')
 
     autostart_arg = DeclareLaunchArgument(
         'autostart',
         default_value='true',
-        description='Automatically startup the SLAM lifecycle stack'
+        description='Automatically startup the localization lifecycle stack'
     )
     autostart = LaunchConfiguration('autostart')
 
-    # 2. Lifecycle nodes for SLAM
-    lifecycle_nodes = ['slam_toolbox', 'map_saver']
+    # 2. Lifecycle nodes managed
+    lifecycle_nodes = ['map_server', 'amcl']
 
-    # 3. SLAM Toolbox Node (Online Asynchronous)
-    start_async_slam_toolbox_node = Node(
-        package='slam_toolbox',
-        executable='async_slam_toolbox_node',
-        name='slam_toolbox',
-        output='screen',
-        parameters=[
-            slam_params_file,
-            {'use_sim_time': use_sim_time}
-        ]
-    )
-
-    # 4. Map Saver Server Node (allows saving maps via ros2 run nav2_map_server map_saver_cli)
-    start_map_saver_server_node = Node(
+    # 3. Map Server Node
+    map_server_node = Node(
         package='nav2_map_server',
-        executable='map_saver_server',
-        name='map_saver',
+        executable='map_server',
+        name='map_server',
         output='screen',
         parameters=[
-            slam_params_file,
+            params_file,
+            {'yaml_filename': map_file, 'use_sim_time': use_sim_time}
+        ]
+    )
+
+    # 4. AMCL Localization Node
+    amcl_node = Node(
+        package='nav2_amcl',
+        executable='amcl',
+        name='amcl',
+        output='screen',
+        parameters=[
+            params_file,
             {'use_sim_time': use_sim_time}
         ]
     )
 
-    # 5. Lifecycle Manager for SLAM
-    start_lifecycle_manager = Node(
+    # 5. Lifecycle Manager for Localization
+    lifecycle_manager_localization_node = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
-        name='lifecycle_manager_slam',
+        name='lifecycle_manager_localization',
         output='screen',
         parameters=[{
             'use_sim_time': use_sim_time,
@@ -81,9 +93,11 @@ def generate_launch_description():
 
     return LaunchDescription([
         use_sim_time_arg,
-        slam_params_file_arg,
+        map_arg,
+        params_file_arg,
         autostart_arg,
-        start_async_slam_toolbox_node,
-        start_map_saver_server_node,
-        start_lifecycle_manager
+        map_server_node,
+        amcl_node,
+        lifecycle_manager_localization_node
     ])
+
