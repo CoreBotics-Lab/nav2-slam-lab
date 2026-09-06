@@ -17,12 +17,6 @@ def generate_launch_description():
         description='Use simulation (Gazebo) clock if true'
     )
 
-    run_rviz2_arg = DeclareLaunchArgument(
-        'run_rviz2',
-        default_value='true',
-        description='Launch RViz2 for SLAM and Nav2 visualization if true'
-    )
-
     # 2. Gazebo Simulation with simpleBiggerWorld (boots immediately)
     gazebo_bigger_world_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -30,14 +24,13 @@ def generate_launch_description():
         )
     )
 
-    # 3. Online SLAM Toolbox + Nav2 Navigation Stack
+    # 3. Online SLAM Toolbox + Nav2 Navigation Stack (always runs RViz2)
     slam_navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(gizmo_navigation_dir, 'launch', 'slam_navigation.launch.py')
         ),
         launch_arguments={
-            'use_sim_time': LaunchConfiguration('use_sim_time'),
-            'run_rviz2': LaunchConfiguration('run_rviz2')
+            'use_sim_time': LaunchConfiguration('use_sim_time')
         }.items()
     )
 
@@ -49,7 +42,6 @@ def generate_launch_description():
 
     return LaunchDescription([
         use_sim_time_arg,
-        run_rviz2_arg,
         gazebo_bigger_world_launch,
         delayed_slam_navigation
     ])

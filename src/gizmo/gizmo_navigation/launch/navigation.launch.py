@@ -2,7 +2,6 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -10,7 +9,7 @@ def generate_launch_description():
     gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
 
     # 1. Declare Launch Arguments
-    launch_arg_use_sim_time = DeclareLaunchArgument(
+    use_sim_time_arg = DeclareLaunchArgument(
         'use_sim_time',
         default_value='true',
         description='Use simulation (Gazebo) clock if true'
@@ -40,13 +39,6 @@ def generate_launch_description():
         description='Full path to the Nav2 parameters YAML file'
     )
     params_file = LaunchConfiguration('params_file')
-
-    launch_arg_run_rviz2 = DeclareLaunchArgument(
-        'run_rviz2',
-        default_value='true',
-        description='Run RViz2 if true'
-    )
-    run_rviz2 = LaunchConfiguration('run_rviz2')
 
     default_rviz_config = os.path.join(
         gizmo_navigation_dir,
@@ -200,15 +192,13 @@ def generate_launch_description():
         name='rviz2',
         output='screen',
         arguments=['-d', rviz_config],
-        parameters=[{'use_sim_time': use_sim_time}],
-        condition=IfCondition(run_rviz2)
+        parameters=[{'use_sim_time': use_sim_time}]
     )
 
     return LaunchDescription([
-        launch_arg_use_sim_time,
+        use_sim_time_arg,
         launch_arg_map,
         launch_arg_params_file,
-        launch_arg_run_rviz2,
         launch_arg_rviz_config,
         map_server_node,
         amcl_node,
