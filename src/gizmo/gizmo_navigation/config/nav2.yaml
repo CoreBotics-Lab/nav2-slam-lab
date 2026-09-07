@@ -60,6 +60,8 @@ bt_navigator:
     wait_for_service_timeout: 10000
     introspection_mode: "disabled"
     navigators: ["navigate_to_pose", "navigate_through_poses"]
+    bt_search_directories:
+      - /opt/ros/lyrical/share/nav2_bt_navigator/behavior_trees
     navigate_to_pose:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
       enable_groot_monitoring: false
@@ -282,6 +284,7 @@ smoother_server:
 behavior_server:
   ros__parameters:
     use_sim_time: true
+    enable_stamped_cmd_vel: false
     local_costmap_topic: local_costmap/costmap_raw
     global_costmap_topic: global_costmap/costmap_raw
     local_footprint_topic: local_costmap/published_footprint
@@ -328,6 +331,7 @@ waypoint_follower:
 velocity_smoother:
   ros__parameters:
     use_sim_time: true
+    enable_stamped_cmd_vel: false
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: "OPEN_LOOP"
@@ -343,6 +347,7 @@ velocity_smoother:
 collision_monitor:
   ros__parameters:
     use_sim_time: true
+    enable_stamped_cmd_vel: false
     enabled: true
     base_frame_id: "base_footprint"
     odom_frame_id: "odom"

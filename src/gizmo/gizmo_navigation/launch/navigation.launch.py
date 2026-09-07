@@ -1,9 +1,11 @@
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, GroupAction
+from launch.conditions import IfCondition, UnlessCondition
 from launch.substitutions import LaunchConfiguration
-from launch_ros.actions import Node
+from launch_ros.actions import LoadComposableNodes, Node
+from launch_ros.descriptions import ComposableNode
 
 
 def generate_launch_description():
@@ -36,6 +38,20 @@ def generate_launch_description():
     )
     autostart = LaunchConfiguration('autostart')
 
+    use_composition_arg = DeclareLaunchArgument(
+        'use_composition',
+        default_value='true',
+        description='Whether to use composed bringup (runs in single container for high reliability)'
+    )
+    use_composition = LaunchConfiguration('use_composition')
+
+    container_name_arg = DeclareLaunchArgument(
+        'container_name',
+        default_value='nav2_container',
+        description='Name of the container for composable nodes'
+    )
+    container_name = LaunchConfiguration('container_name')
+
     # 2. Lifecycle nodes for Navigation
     navigation_nodes = [
         'controller_server',
@@ -45,71 +61,111 @@ def generate_launch_description():
         'waypoint_follower'
     ]
 
-    # 3. Controller Server Node (DWB Local Planner)
-    controller_server_node = Node(
-        package='nav2_controller',
-        executable='controller_server',
-        name='controller_server',
-        output='screen',
-        parameters=[
-            params_file,
-            {'use_sim_time': use_sim_time}
-        ],
-        remappings=[
-            ('cmd_vel', '/cmd_vel'),
-            ('odom', '/odometry/filtered')
+    remappings = [
+        ('cmd_vel', '/cmd_vel'),
+        ('odom', '/odometry/filtered')
+    ]
+
+    # 3. Composed Mode: Single container process with all navigation nodes loaded into it
+    # Matches official Nav2 bringup architecture to eliminate DDS service discovery race conditions
+    composition_group = GroupAction(
+        condition=IfCondition(use_composition),
+        actions=[
+            Node(
+                package='rclcpp_components',
+                executable='component_container_isolated',
+                name=container_name,
+                output='screen',
+                parameters=[
+                    params_file,
+                    {'use_sim_time': use_sim_time, 'autostart': autostart}
+                ]
+            ),
+            LoadComposableNodes(
+                target_container=container_name,
+                composable_node_descriptions=[
+                    ComposableNode(
+                        package='nav2_controller',
+                        plugin='nav2_controller::ControllerServer',
+                        name='controller_server',
+                        parameters=[params_file, {'use_sim_time': use_sim_time}],
+                        remappings=remappings
+                    ),
+                    ComposableNode(
+                        package='nav2_planner',
+                        plugin='nav2_planner::PlannerServer',
+                        name='planner_server',
+                        parameters=[params_file, {'use_sim_time': use_sim_time}]
+                    ),
+                    ComposableNode(
+                        package='nav2_behaviors',
+                        plugin='behavior_server::BehaviorServer',
+                        name='behavior_server',
+                        parameters=[params_file, {'use_sim_time': use_sim_time}],
+                        remappings=[('cmd_vel', '/cmd_vel')]
+                    ),
+                    ComposableNode(
+                        package='nav2_bt_navigator',
+                        plugin='nav2_bt_navigator::BtNavigator',
+                        name='bt_navigator',
+                        parameters=[params_file, {'use_sim_time': use_sim_time}]
+                    ),
+                    ComposableNode(
+                        package='nav2_waypoint_follower',
+                        plugin='nav2_waypoint_follower::WaypointFollower',
+                        name='waypoint_follower',
+                        parameters=[params_file, {'use_sim_time': use_sim_time}]
+                    ),
+                ]
+            )
         ]
     )
 
-    # 4. Planner Server Node (Global Path Planner)
-    planner_server_node = Node(
-        package='nav2_planner',
-        executable='planner_server',
-        name='planner_server',
-        output='screen',
-        parameters=[
-            params_file,
-            {'use_sim_time': use_sim_time}
+    # 4. Standalone Mode: fallback to isolated processes when use_composition is false
+    standalone_group = GroupAction(
+        condition=UnlessCondition(use_composition),
+        actions=[
+            Node(
+                package='nav2_controller',
+                executable='controller_server',
+                name='controller_server',
+                output='screen',
+                parameters=[params_file, {'use_sim_time': use_sim_time}],
+                remappings=remappings
+            ),
+            Node(
+                package='nav2_planner',
+                executable='planner_server',
+                name='planner_server',
+                output='screen',
+                parameters=[params_file, {'use_sim_time': use_sim_time}]
+            ),
+            Node(
+                package='nav2_behaviors',
+                executable='behavior_server',
+                name='behavior_server',
+                output='screen',
+                parameters=[params_file, {'use_sim_time': use_sim_time}],
+                remappings=[('cmd_vel', '/cmd_vel')]
+            ),
+            Node(
+                package='nav2_bt_navigator',
+                executable='bt_navigator',
+                name='bt_navigator',
+                output='screen',
+                parameters=[params_file, {'use_sim_time': use_sim_time}]
+            ),
+            Node(
+                package='nav2_waypoint_follower',
+                executable='waypoint_follower',
+                name='waypoint_follower',
+                output='screen',
+                parameters=[params_file, {'use_sim_time': use_sim_time}]
+            ),
         ]
     )
 
-    # 5. Behavior Server Node (Recoveries)
-    behavior_server_node = Node(
-        package='nav2_behaviors',
-        executable='behavior_server',
-        name='behavior_server',
-        output='screen',
-        parameters=[
-            params_file,
-            {'use_sim_time': use_sim_time}
-        ]
-    )
-
-    # 6. BT Navigator Node (Behavior Tree Orchestrator)
-    bt_navigator_node = Node(
-        package='nav2_bt_navigator',
-        executable='bt_navigator',
-        name='bt_navigator',
-        output='screen',
-        parameters=[
-            params_file,
-            {'use_sim_time': use_sim_time}
-        ]
-    )
-
-    # 7. Waypoint Follower Node
-    waypoint_follower_node = Node(
-        package='nav2_waypoint_follower',
-        executable='waypoint_follower',
-        name='waypoint_follower',
-        output='screen',
-        parameters=[
-            params_file,
-            {'use_sim_time': use_sim_time}
-        ]
-    )
-
-    # 8. Lifecycle Manager for Navigation
+    # 5. Lifecycle Manager for Navigation
     lifecycle_manager_navigation_node = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
@@ -129,10 +185,9 @@ def generate_launch_description():
         use_sim_time_arg,
         params_file_arg,
         autostart_arg,
-        controller_server_node,
-        planner_server_node,
-        behavior_server_node,
-        bt_navigator_node,
-        waypoint_follower_node,
+        use_composition_arg,
+        container_name_arg,
+        composition_group,
+        standalone_group,
         lifecycle_manager_navigation_node
     ])

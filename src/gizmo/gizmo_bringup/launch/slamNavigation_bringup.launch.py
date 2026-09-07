@@ -88,6 +88,13 @@ def generate_launch_description():
     )
     rviz_config = LaunchConfiguration('rviz_config')
 
+    use_composition_arg = DeclareLaunchArgument(
+        'use_composition',
+        default_value='true',
+        description='Whether to use composed Nav2 bringup'
+    )
+    use_composition = LaunchConfiguration('use_composition')
+
     # 2. Paths to gizmo_navigation building block launch files
     slam_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'slam.launch.py')
     localization_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'localization.launch.py')
@@ -131,7 +138,8 @@ def generate_launch_description():
         launch_arguments={
             'use_sim_time': use_sim_time,
             'params_file': params_file,
-            'autostart': autostart
+            'autostart': autostart,
+            'use_composition': use_composition
         }.items()
     )
 
@@ -159,6 +167,7 @@ def generate_launch_description():
         autostart_arg,
         use_rviz_arg,
         rviz_config_arg,
+        use_composition_arg,
         slam_group,
         localization_group,
         navigation_launch,
