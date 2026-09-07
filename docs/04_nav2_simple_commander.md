@@ -91,7 +91,7 @@ In professional ROS 2 deployments, we strictly separate **Infrastructure** from 
 │  LAYER 1: INFRASTRUCTURE / CONFIG (gizmo_navigation)   │
 │  Build Type: ament_cmake                               │
 │                                                        │
-│  • Launch files (navigation.launch.py, slam_nav.py)    │
+│  • Launch files (navigation.launch.py, slam.launch.py) │
 │  • Hardware tuning & Costmap params (nav2.yaml)        │
 │  • Environmental maps (.yaml / .pgm)                   │
 │  • RViz visual configurations                          │
@@ -153,7 +153,7 @@ if result == TaskResult.SUCCEEDED:
 ## 5. Deep-Dive: `waitUntilNav2Active` & The AMCL Hang Trap
 
 ### The Hidden Bug:
-If you run `slam_navigation.launch.py` and call `nav.waitUntilNav2Active()` without arguments, the script hangs indefinitely:
+If you run `slamNavigation_bringup.launch.py slam:=true` and call `nav.waitUntilNav2Active()` without arguments, the script hangs indefinitely:
 ```text
 [INFO] [basic_navigator]: amcl/get_state service not available, waiting...
 [INFO] [basic_navigator]: amcl/get_state service not available, waiting...
@@ -177,8 +177,8 @@ def waitUntilNav2Active(self, navigator: str = 'bt_navigator',
     self._waitForNodeToActivate(navigator)
 ```
 
-1. **In Static Navigation (`navigation.launch.py`):** `amcl` is running. Calling `nav.setInitialPose()` seeds the particle filter, allowing `_waitForInitialPose()` to succeed.
-2. **In Online SLAM Navigation (`slam_navigation.launch.py`):** `amcl` is **not running**—`slam_toolbox` is running instead! Calling `waitUntilNav2Active()` with default arguments searches for `/amcl/get_state` which does not exist!
+1. **In Static Navigation (`slam:=false`):** `amcl` is running. Calling `nav.setInitialPose()` seeds the particle filter, allowing `_waitForInitialPose()` to succeed.
+2. **In Online SLAM Navigation (`slam:=true`):** `amcl` is **not running**—`slam_toolbox` is running instead! Calling `waitUntilNav2Active()` with default arguments searches for `/amcl/get_state` which does not exist!
 
 ### The Fix:
 Explicitly pass the localizer name:
@@ -355,39 +355,49 @@ elif result == TaskResult.FAILED:
 
 ## 9. Step-by-Step Execution Guide for Gizmo
  
- ### Option A: Online SLAM Autonomous Navigation (No pre-saved map required)
- 1. **Terminal 1: Gazebo Simulation**
-    ```bash
-    ros2 launch gizmo_gazebo gazebo_simpleWorld.launch.py
-    ```
- 2. **Terminal 2: Online SLAM Navigation**
-    ```bash
-    ros2 launch gizmo_navigation slam_navigation.launch.py
-    ```
- 3. **Terminal 3: Python Mission Script**
-    ```bash
-    # Drive to (X=1.5m, Y=0.5m) and face North (Yaw=1.57 rad / 90 deg):
-    ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -x 1.5 -y 0.5 -yaw 1.57
-    ```
+### Option A: Online SLAM Autonomous Navigation (One-Command Bringup)
+1. **Terminal 1: Master Simulation & SLAM Bringup**
+   ```bash
+   ros2 launch gizmo_bringup slamNavigation_simpleBiggerWorld.launch.py
+   ```
+2. **Terminal 2: Python Mission Script**
+   ```bash
+   # Drive to (X=1.5m, Y=0.5m) and face North (Yaw=1.57 rad / 90 deg):
+   ros2 run gizmo_scripts go_to_goal_slam_toolbox_nav2 -x 1.5 -y 0.5 -yaw 1.57
+   ```
 
 ---
 
 ### Option B: Static Map Navigation with AMCL (Production Mode)
- 1. **Terminal 1: Gazebo Simulation**
-    ```bash
-    ros2 launch gizmo_gazebo gazebo_simpleWorld.launch.py
-    ```
- 2. **Terminal 2: Static Map Navigation Stack**
-    ```bash
-    ros2 launch gizmo_navigation navigation.launch.py
-    ```
- 3. **Terminal 3: Python Mission Script (with Initial Pose Seeding)**
-    ```bash
-    # If Gizmo is starting at origin (0, 0) and driving to (X=2.0m, Y=0.0m):
-    ros2 run gizmo_scripts go_to_goal_amcl_nav2 -x 2.0 -y 0.0 -yaw 0.0
+1. **Terminal 1: Gazebo Simulation**
+   ```bash
+   ros2 launch gizmo_gazebo gazebo_simpleBiggerWorld.launch.py
+   ```
+2. **Terminal 2: Master Bringup in Localization Mode**
+   ```bash
+   ros2 launch gizmo_bringup slamNavigation_bringup.launch.py slam:=false map:=/root/ros2_ws/src/gizmo/gizmo_navigation/maps/simple_world_map.yaml
+   ```
+3. **Terminal 3: Python Mission Script (with Initial Pose Seeding)**
+   ```bash
+   # If Gizmo is starting at origin (0, 0) and driving to (X=2.0m, Y=0.0m):
+   ros2 run gizmo_scripts go_to_goal_amcl_nav2 -x 2.0 -y 0.0 -yaw 0.0
 
-    # If Gizmo is relocated on the map (e.g. at X=1.0m) and driving to (X=2.0m):
-    ros2 run gizmo_scripts go_to_goal_amcl_nav2 -x 2.0 --init-x 1.0
-    ```
+   # If Gizmo is relocated on the map (e.g. at X=1.0m) and driving to (X=2.0m):
+   ros2 run gizmo_scripts go_to_goal_amcl_nav2 -x 2.0 --init-x 1.0
+   ```
 
-Watch Gizmo autonomously localize its particle swarm, plan a collision-free path on the global costmap, navigate around obstacles, stream live telemetry, and announce mission success! 🤖🏁
+---
+
+### Option C: Automated Multi-Waypoint Patrol from YAML (`waypointFromYaml.py`)
+To execute complex multi-target missions without hardcoding coordinates into Python, define targets in `test_waypoint.yaml` (specifying positions `[x, y, z]` and direct quaternions `[w, x, y, z]`).
+
+1. **Terminal 1: Start Simulation & Navigation**
+   ```bash
+   ros2 launch gizmo_bringup slamNavigation_simpleBiggerWorld.launch.py
+   ```
+2. **Terminal 2: Execute Mission Script**
+   ```bash
+   python3 /root/ros2_ws/src/gizmo/gizmo_scripts/gizmo_scripts/practice/waypointFromYaml.py
+   ```
+
+Watch Gizmo autonomously localize, plan collision-free paths on the costmaps, navigate around obstacles sequentially, stream live feedback, and announce mission completion! 🤖🏁

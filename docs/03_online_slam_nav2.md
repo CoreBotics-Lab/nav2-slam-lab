@@ -77,7 +77,7 @@ graph LR
 
 ### Key Differences in Transform Authority:
 
-| Responsibility | Static Navigation (`navigation.launch.py`) | Online SLAM Navigation (`slam_navigation.launch.py`) |
+| Responsibility | Static Navigation (`localization.launch.py` + `navigation.launch.py`) | Online SLAM Navigation (`slamNavigation_bringup.launch.py slam:=true`) |
 | :--- | :--- | :--- |
 | **`map` Frame Authority** | `nav2_amcl` (Particle filter matching static map) | `slam_toolbox` (Scan-to-map Ceres optimization) |
 | **`/map` Topic Publisher** | `nav2_map_server` (Static `.pgm` file) | `slam_toolbox` (Dynamic ROS OccupancyGrid stream) |
@@ -88,7 +88,7 @@ graph LR
 
 ## 3. Why AMCL is Excluded: The Single-Parent TF Rule & Collision War
 
-A common beginner question is: *"Why shouldn't we add the AMCL node to `slam_navigation.launch.py` to get extra localization?"*
+A common beginner question is: *"Why shouldn't we add the AMCL node during SLAM to get extra localization?"*
 
 ```
                   ┌──────────────┐
@@ -115,24 +115,28 @@ A common beginner question is: *"Why shouldn't we add the AMCL node to `slam_nav
 
 ## 4. Lifecycle Orchestration: Merging SLAM Toolbox & Nav2
 
-In `slam_navigation.launch.py`, a single unified `lifecycle_manager` orchestrates all nodes:
+In `slamNavigation_bringup.launch.py`, lifecycle management is cleanly decoupled across two specialized lifecycle managers:
 
-```python
-lifecycle_nodes = [
-    'slam_toolbox',        # 1. Starts SLAM engine & map generator
-    'controller_server',   # 2. Starts DWB local controller
-    'planner_server',      # 3. Starts NavFn global path planner
-    'behavior_server',     # 4. Starts Recovery behaviors
-    'bt_navigator',        # 5. Starts Behavior Tree engine
-    'waypoint_follower'    # 6. Starts Multi-waypoint follower
-]
+```mermaid
+graph TD
+    subgraph "SLAM Subsystem (slam.launch.py)"
+        M_SLAM["lifecycle_manager_slam"] -->|"Manages"| SLAM["slam_toolbox"]
+    end
+
+    subgraph "Navigation Subsystem (navigation.launch.py via Composition)"
+        M_NAV["lifecycle_manager_navigation"] -->|"Manages"| CONTROLLER["controller_server"]
+        M_NAV -->|"Manages"| PLANNER["planner_server"]
+        M_NAV -->|"Manages"| BEHAVIOR["behavior_server"]
+        M_NAV -->|"Manages"| BT["bt_navigator"]
+        M_NAV -->|"Manages"| WAYPOINT["waypoint_follower"]
+    end
 ```
 
 ### Startup Sequence:
-1. **`slam_toolbox` Configures & Activates:**  
+1. **`slam_toolbox` Configures & Activates via `lifecycle_manager_slam`:**  
    Immediately takes the robot's starting spot as $(0, 0, 0)$ in the `map` frame and begins broadcasting `map ➔ odom`.
-2. **Costmaps Initialize:**  
-   `global_costmap` and `local_costmap` subscribe to `/map` and `/odometry/filtered`. Because `map ➔ odom` is already live, costmaps activate with zero TF timeout errors.
+2. **Costmaps & Nav2 Components Initialize via `lifecycle_manager_navigation`:**  
+   Running inside `nav2_container` (process composition), `controller_server`, `planner_server`, `behavior_server`, `bt_navigator`, and `waypoint_follower` activate sequentially. Because `map ➔ odom` is already live from SLAM, costmaps activate with zero TF timeout errors.
 3. **Action Servers Stand Up:**  
    `bt_navigator` and `waypoint_follower` connect to `planner_server` and `controller_server`, unlocking the `Nav2 Goal` tool in RViz.
 
@@ -148,7 +152,7 @@ If Lifecycle Manager Name == 'lifecycle_manager_navigation' ──► Status: Ac
 If Lifecycle Manager Name == Custom Name                    ──► Status: Unknown (Buttons Greyed Out / Disabled)
 ```
 
-* To ensure all interactive buttons (`Cancel`, `Pause`, `Waypoint Following`) light up in RViz, the lifecycle manager node in `slam_navigation.launch.py` is named **`lifecycle_manager_navigation`**.
+* To ensure all interactive buttons (`Cancel`, `Pause`, `Waypoint Following`) light up in RViz, the lifecycle manager node in `navigation.launch.py` is named **`lifecycle_manager_navigation`**.
 
 ---
 
@@ -217,15 +221,24 @@ After Loop Closure:  Ceres Solver snaps graph nodes into place!
 ---
 
 ## 9. Step-by-Step Launch & Operational Workflow
-
-### Terminal 1: Launch Gazebo Simulation World
+ 
+### Option A: One-Command End-to-End Bringup (Recommended)
+This master launch file starts Gazebo with `simpleBiggerWorld.sdf`, delays 5.0s for physics/TF stabilization, and automatically boots SLAM + Nav2 + RViz:
 ```bash
-ros2 launch gizmo_gazebo gazebo_simpleWorld.launch.py
+ros2 launch gizmo_bringup slamNavigation_simpleBiggerWorld.launch.py
+```
+*(Pass `headless:=true` if running on a server or low-power machine without GUI).*
+
+### Option B: Modular Two-Terminal Bringup
+
+#### Terminal 1: Launch Gazebo Simulation World
+```bash
+ros2 launch gizmo_gazebo gazebo_simpleBiggerWorld.launch.py
 ```
 
-### Terminal 2: Launch Online SLAM Navigation
+#### Terminal 2: Launch Unified Bringup in SLAM Mode
 ```bash
-ros2 launch gizmo_navigation slam_navigation.launch.py
+ros2 launch gizmo_bringup slamNavigation_bringup.launch.py slam:=true
 ```
 
 ### Operating in RViz:
@@ -238,7 +251,7 @@ ros2 launch gizmo_navigation slam_navigation.launch.py
 
 ## 10. Saving the Dynamically Generated Map On-The-Fly
 
-Once you have driven Gizmo around the entire building using `Nav2 Goal` and are happy with the completed map, you can save it to disk directly from Terminal 3:
+Once you have driven Gizmo around the entire building using `Nav2 Goal` and are happy with the completed map, you can save it to disk directly from another terminal:
 
 ```bash
 ros2 run nav2_map_server map_saver_cli -f /root/ros2_ws/src/gizmo/gizmo_navigation/maps/my_new_world_map
@@ -256,19 +269,19 @@ In commercial AMRs (e.g. Roborock, Roomba, Amazon Proteus), robots utilize a **2
 
 ```mermaid
 graph TD
-    subgraph "Phase 1: MAPPING MODE (slam_navigation.launch.py)"
+    subgraph "Phase 1: MAPPING MODE (slamNavigation_bringup.launch.py slam:=true)"
         SLAM_A["slam_toolbox (ACTIVE)"]
         AMCL_U["amcl (UNCONFIGURED / IDLE)"]
         MAP_U["map_server (UNCONFIGURED / IDLE)"]
     end
 
-    TRIGGER["User sends: '/map_done' command"]
+    TRIGGER["User saves map & switches mode"]
 
-    subgraph "Phase 2: SEAMLESS PRODUCTION MODE (navigation.launch.py)"
-        SLAM_U["slam_toolbox (DEACTIVATED / IDLE)"]
-        AMCL_A["amcl (CONFIGURED & ACTIVE)"]
-        MAP_A["map_server (CONFIGURED & ACTIVE)"]
-        NAV["Nav2 Stack (Remains Active Continuously!)"]
+    subgraph "Phase 2: PRODUCTION LOCALIZATION (slamNavigation_bringup.launch.py slam:=false)"
+        SLAM_U["slam_toolbox (INACTIVE)"]
+        AMCL_A["amcl (ACTIVE)"]
+        MAP_A["map_server (ACTIVE)"]
+        NAV["Nav2 Stack (Active inside nav2_container)"]
     end
 
     SLAM_A --> TRIGGER
@@ -281,13 +294,13 @@ graph TD
 ### Why Commercial AMRs Switch to Phase 2:
 * **Zero Optimization Overhead:** Deactivating `slam_toolbox` frees up CPU resources once the building layout is known.
 * **Immutable Ground Truth:** AMCL prevents temporary dynamic obstacles (boxes, pedestrians) from corrupting the static map layout.
-* **Zero System Reboot:** Transitioning lifecycle states allows the robot to switch from discovery to warehouse patrol in under $500\text{ ms}$!
+* **Zero System Reboot:** Transitioning modes allows the robot to switch from discovery to warehouse patrol smoothly!
 
 ---
 
 ## 12. Comparison Matrix: Static Nav2 vs Online SLAM vs Auto-Exploration
 
-| Feature | Static Nav2 (`navigation.launch.py`) | Online SLAM Nav2 (`slam_navigation.launch.py`) | Autonomous Frontier Exploration |
+| Feature | Static Nav2 (`slam:=false`) | Online SLAM Nav2 (`slam:=true`) | Autonomous Frontier Exploration |
 | :--- | :--- | :--- | :--- |
 | **Map State** | Fixed, pre-loaded from disk | Dynamically created in real-time | Dynamically created in real-time |
 | **Localization** | AMCL (Particle Filter) | SLAM Toolbox (Pose-Graph Ceres) | SLAM Toolbox (Pose-Graph Ceres) |

@@ -259,23 +259,23 @@ In ROS 2, `slam_toolbox` is a **Managed Lifecycle Node** (REP-2002 Standard):
 
 ---
 
-### 🏗️ The 3 Nodes in `slam.launch.py`:
+### 🏗️ Subsystem Architecture in `slam.launch.py`:
 
 ```
-┌────────────────────────────────┐       ┌────────────────────────────────┐       ┌────────────────────────────────┐
-│  1. async_slam_toolbox_node    │       │     2. lifecycle_manager       │       │          3. rviz2              │
-│       (The Brain & Eyes)       │       │       (The Supervisor)         │       │     (The Visual Window)        │
-│                                │       │                                │       │                                │
-│ • Ingests LiDAR (/scan)        │       │ • Calls 'Configure' &          │       │ • Visualizes /map, TF trees,   │
-│ • Runs Ceres Pose-Graph SLAM   │◄──────┤   'Activate' lifecycle states  │       │   laser scans, & robot model   │
-│ • Broadcasts TF (map ➔ odom)   │       │ • Monitors node heartbeat      │       │ • Allows manual 2D pose/goals  │
-│ • Streams live /map grid       │       │   (bond connection)            │       │                                │
-└────────────────────────────────┘       └────────────────────────────────┘       └────────────────────────────────┘
+┌─────────────────────────────────────────┐         ┌─────────────────────────────────────────┐
+│       1. async_slam_toolbox_node        │         │      2. lifecycle_manager_slam          │
+│           (The Brain & Eyes)            │         │            (The Supervisor)             │
+│                                         │         │                                         │
+│ • Ingests LiDAR (/scan)                 │         │ • Calls 'Configure' & 'Activate'        │
+│ • Runs Ceres Pose-Graph SLAM            │◄────────┤   lifecycle transitions                 │
+│ • Broadcasts TF (map ➔ odom)            │         │ • Manages node lifecycle state machine  │
+│ • Streams live /map occupancy grid      │         │ • bond_timeout: 0.0 (prevents dropouts) │
+└─────────────────────────────────────────┘         └─────────────────────────────────────────┘
 ```
 
-1. **`async_slam_toolbox_node` (`slam_toolbox`):** The mathematical engine. Processes LiDAR scans asynchronously so complex Ceres graph optimizations do not block sensor ingress.
-2. **`lifecycle_manager` (`nav2_lifecycle_manager`):** The automated supervisor. Automatically brings `slam_toolbox` from `Unconfigured` $\to$ `Configure` $\to$ `Activate` without manual terminal commands.
-3. **`rviz2`:** The graphical interface loading `slam.rviz` for real-time visualization.
+1. **`async_slam_toolbox_node` (`slam_toolbox`):** The mathematical engine. Ingests raw `/scan` and processes LiDAR keyframes asynchronously so computationally heavy Ceres graph optimizations do not block sensor ingress.
+2. **`lifecycle_manager_slam` (`nav2_lifecycle_manager`):** The automated supervisor. Automatically transitions `slam_toolbox` from `Unconfigured` $\to$ `Configure` $\to$ `Activate` without requiring manual terminal service calls.
+3. **Modular Separation:** To keep building blocks modular and reusable, RViz2 and Gazebo are separated into top-level master bringup launch files (`slamNavigation_bringup.launch.py` and `slamNavigation_simpleBiggerWorld.launch.py`). Furthermore, `map_saver` is not tied into the SLAM lifecycle chain to eliminate startup timeout failures.
 
 ---
 
@@ -335,4 +335,5 @@ Because it uses standard ROS 2 interfaces, **`nav2_lifecycle_manager` can be use
 | **Transform Cache Lag Drops** | Gazebo `/tf` bridge clashed with ROS 2 `robot_state_publisher` and `ekf_node`. | Remove `/tf` from `ros_gz_bridge_config.yaml`; set `restamp_tf: true` in `slam_toolbox.yaml`. |
 | **Physics Wheel Jitter** | Extreme friction coefficients (`1e15`) caused DART/Bullet matrix singularity. | Set realistic contact friction (`mu1: 1.0`, `mu2: 1.0`) with `minDepth: 0.001` and `maxVel: 0.1`. |
 | **High CPU Consumption** | Camera sensors rendering 30 FPS RGB/Depth in Gazebo during 2D mapping. | Added conditional `use_camera:=false` in `sensors.gazebo.xacro` and `gazebo_simpleWorld.launch.py`. |
+| **Early TF Extrapolation Lag** | Gazebo physics, clock, and TF buffers take 2–3s to establish smooth continuous time. | Added a 5.0-second `TimerAction` delay in `slamNavigation_simpleBiggerWorld.launch.py` to allow clock stabilization before SLAM and Nav2 configure. |
 
