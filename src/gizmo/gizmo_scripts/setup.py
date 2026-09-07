@@ -26,7 +26,7 @@ setup(
             'go_to_goal_amcl_nav2 = gizmo_scripts.go_to_goal_amcl_nav2:main',
 
             # Practice and Learning Nav2 Simple Commander API
-            'practice_nav2Api = gizmo_scripts.practice.practice_nav2_api:main',
+            'waypointFromYaml = gizmo_scripts.practice.waypointFromYaml:main',
         ],
     },
 )
