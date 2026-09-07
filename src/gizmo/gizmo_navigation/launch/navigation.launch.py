@@ -73,9 +73,10 @@ def generate_launch_description():
         actions=[
             Node(
                 package='rclcpp_components',
-                executable='component_container_isolated',
+                executable='component_container',
                 name=container_name,
                 output='screen',
+                arguments=['--isolated', '--executor-type', 'single-threaded'],
                 parameters=[
                     params_file,
                     {'use_sim_time': use_sim_time, 'autostart': autostart}
