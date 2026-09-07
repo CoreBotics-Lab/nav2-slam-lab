@@ -40,7 +40,7 @@ graph LR
 
 When the wheels slip, the virtual paper (`odom`) slides and drifts away from the real room. **SLAM does not rewrite the wheel odometry counters.** Instead, SLAM computes the offset **`map ➔ odom`** (virtually shifting the sheet of paper) so that the final position:
 
-$$\text{Pose}_{\text{base\_footprint in map}} = (\mathbf{map \rightarrow odom}) \times (\mathbf{odom \rightarrow base\_footprint})$$
+$$\text{Pose}(\text{Robot in Map}) = (\mathbf{T}_{\text{map} \rightarrow \text{odom}}) \times (\mathbf{T}_{\text{odom} \rightarrow \text{base}})$$
 
 remains **100% accurate** in the real world!
 
@@ -51,14 +51,14 @@ At the exact timestamp $t = 0$ when `slam_toolbox` is configured and activated, 
 Suppose:
 1. You launch Gazebo $\rightarrow$ `odom` frame origin is created at $(0, 0, 0)$.
 2. You drive Gizmo forward by **$+1.0\text{ meter}$** using teleop:
-   $$\mathbf{odom \rightarrow base\_footprint} = (+1.0, 0.0, 0.0)$$
+   $$\mathbf{T}_{\text{odom} \rightarrow \text{base}} = (+1.0, 0.0, 0.0)$$
 3. **Now, you launch `slam_toolbox`:**
    - SLAM declares: *"Where the robot is standing right now is my `map` $(0, 0, 0)$ origin!"*
    - Therefore, the robot's pose in the map must be $(0.0, 0.0, 0.0)$.
    - To make the TF math align, SLAM automatically sets the **`map ➔ odom`** offset to **$(-1.0, 0.0, 0.0)$**:
 
-$$\text{Pose}_{\text{base\_footprint in map}} = (\mathbf{map \rightarrow odom}) + (\mathbf{odom \rightarrow base\_footprint})$$
-$$\text{Pose}_{\text{base\_footprint in map}} = (-1.0) + (+1.0) = \mathbf{(0.0, 0.0, 0.0)}$$
+$$\text{Pose}(\text{Robot in Map}) = (\mathbf{T}_{\text{map} \rightarrow \text{odom}}) + (\mathbf{T}_{\text{odom} \rightarrow \text{base}})$$
+$$\text{Pose}(\text{Robot in Map}) = (-1.0) + (+1.0) = \mathbf{(0.0, 0.0, 0.0)}$$
 
 ```
 [map origin (0,0)] = (Where you launched SLAM)

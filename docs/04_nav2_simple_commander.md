@@ -42,7 +42,7 @@ A commercial robot (like a hospital delivery bot, warehouse AMR, or security gua
 Instead of forcing roboticists to write 150+ lines of asynchronous Action Client boilerplate (`ActionClient`, `Future`, `GoalHandle`, multi-threaded spinners, and callback queues), Nav2 provides **`BasicNavigator`**:
 
 $$\begin{aligned}
-\text{\bf 150 lines of raw rclpy action plumbing} \quad \xrightarrow{\text{nav2\_simple\_commander}} \quad \mathbf{\text{5 lines of elegant Python!}}
+\text{\bf 150 lines of raw rclpy action plumbing} \quad \xrightarrow{\text{nav2-simple-commander}} \quad \mathbf{\text{5 lines of elegant Python!}}
 \end{aligned}$$
 
 ---
