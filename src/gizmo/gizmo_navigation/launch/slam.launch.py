@@ -37,7 +37,7 @@ def generate_launch_description():
     autostart = LaunchConfiguration('autostart')
 
     # 2. Lifecycle nodes for SLAM
-    lifecycle_nodes = ['slam_toolbox', 'map_saver']
+    lifecycle_nodes = ['slam_toolbox']
 
     # 3. SLAM Toolbox Node (Online Asynchronous)
     start_async_slam_toolbox_node = Node(
@@ -51,19 +51,7 @@ def generate_launch_description():
         ]
     )
 
-    # 4. Map Saver Server Node (allows saving maps via ros2 run nav2_map_server map_saver_cli)
-    start_map_saver_server_node = Node(
-        package='nav2_map_server',
-        executable='map_saver_server',
-        name='map_saver',
-        output='screen',
-        parameters=[
-            slam_params_file,
-            {'use_sim_time': use_sim_time}
-        ]
-    )
-
-    # 5. Lifecycle Manager for SLAM
+    # 4. Lifecycle Manager for SLAM
     start_lifecycle_manager = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
@@ -84,6 +72,6 @@ def generate_launch_description():
         slam_params_file_arg,
         autostart_arg,
         start_async_slam_toolbox_node,
-        start_map_saver_server_node,
         start_lifecycle_manager
     ])
+

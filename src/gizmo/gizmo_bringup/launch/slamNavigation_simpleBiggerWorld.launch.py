@@ -35,9 +35,9 @@ def generate_launch_description():
         }.items()
     )
 
-    # Delay SLAM & Nav2 by 3.0 seconds so Gazebo physics, clock, and TF can stabilize first
+    # Delay SLAM & Nav2 by 5.0 seconds so Gazebo physics, clock, and TF can stabilize first
     delayed_slam_navigation = TimerAction(
-        period=3.0,
+        period=5.0,
         actions=[slam_navigation_launch]
     )
 
