@@ -27,6 +27,7 @@ setup(
 
             # Practice and Learning Nav2 Simple Commander API
             'waypointFromYaml = gizmo_scripts.practice.waypointFromYaml:main',
+            'patrolFromYaml = gizmo_scripts.practice.patrolFromYaml:main',
         ],
     },
 )
