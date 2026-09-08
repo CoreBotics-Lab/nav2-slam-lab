@@ -58,8 +58,11 @@ def main(args=None):
 
     nav = BasicNavigator()
     # nav.cancelTask()  # Cancel any existing navigation tasks
-
-    nav.waitUntilNav2Active(localizer='slam_toolbox')
+    # Note: Using AMCL instead of SLAM Toolbox.
+    # goThroughPoses plans a continuous global trajectory through ALL via-points simultaneously,
+    # assuming a static, fully mapped environment. In online SLAM, occluded/unknown space behind
+    # obstacles and dynamic pose-graph shifts cause the planner to form erratic loops or abort planning.
+    nav.waitUntilNav2Active(localizer='amcl')
 
     waypoints = load_waypoints_from_file("map", nav.get_clock().now().to_msg(), yaml_path)
 
