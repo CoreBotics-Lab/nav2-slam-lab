@@ -8,12 +8,12 @@ import builtin_interfaces.msg
 from tf_transformations import quaternion_from_euler
 import yaml
 
-def _set_pose(_frame_id: str, _timeStamp: builtin_interfaces.msg.Time, x: float, y: float, quat: list) -> PoseStamped:
+def _set_pose(_frame_id: str, _timeStamp: builtin_interfaces.msg.Time, _xy: list, quat: list) -> PoseStamped:
     _pose = PoseStamped()
     _pose.header.frame_id = _frame_id
     _pose.header.stamp = _timeStamp
-    _pose.pose.position.x = x
-    _pose.pose.position.y = y
+    _pose.pose.position.x = float(_xy[0])
+    _pose.pose.position.y = float(_xy[1])
     _pose.pose.position.z = 0.0
 
     # In YAML: [w, x, y, z] -> directly assign to PoseStamped
@@ -35,7 +35,7 @@ def load_waypoints_from_file(_frame_id: str, _timeStamp: builtin_interfaces.msg.
         orientation = wp_data.get("orientation")  # [w, x, y, z]
         
         # Pass the whole orientation list directly!
-        waypoint = _set_pose(_frame_id, _timeStamp, pose[0], pose[1], orientation)
+        waypoint = _set_pose(_frame_id, _timeStamp, pose, orientation)
         waypoints.append(waypoint)
 
     return waypoints
