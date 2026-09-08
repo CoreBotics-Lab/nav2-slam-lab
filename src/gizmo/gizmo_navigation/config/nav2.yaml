@@ -131,7 +131,7 @@ controller_server:
     FollowPath:
       plugin: "dwb_core::DWBLocalPlanner"
       debug_trajectory_details: true
-      min_vel_x: 0.0
+      min_vel_x: -0.15    # Allow reversing at up to 0.15 m/s when trapped!
       min_vel_y: 0.0
       max_vel_x: 0.73
       max_vel_y: 0.0
@@ -198,8 +198,8 @@ local_costmap:
           obstacle_min_range: 0.08
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 3.0
-        inflation_radius: 0.35
+        cost_scaling_factor: 5.0   # Steeper drop-off
+        inflation_radius: 0.22      # Reduced from 0.35m (Gizmo's radius is only 0.09m!)
       always_send_full_costmap: true
       introspection_mode: "disabled"
 
@@ -264,9 +264,11 @@ planner_server:
     introspection_mode: "disabled"
     GridBased:
       plugin: "nav2_navfn_planner::NavfnPlanner"
-      tolerance: 0.5
-      use_astar: false
-      max_cycles_factor: 4
+      # tolerance: 0.5
+      tolerance: 0.25
+      # use_astar: false
+      use_astar: true         # A* plans clean, direct paths instead of loopy Dijkstra curves
+      max_cycles_factor: 10   # Prevents "path extraction exhausted" on long routes
       allow_unknown: true
 
 smoother_server:
