@@ -20,6 +20,17 @@
         </geometry>
         </collision>
 
+        <!-- Part base_floor_1 -->
+        <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+            <mesh filename="package://gizmo_description/meshes/base_floor_1.stl"/>
+        </geometry>
+        <material name="base_floor_1_material">
+            <color rgba="0.121569 0.133333 0.14902 1"/>
+        </material>
+        </visual>
+
         <!-- Part bn_8699_1727796_hexagon_socket_button_head_screw_m2_5x6 -->
         <visual>
         <origin xyz="0.0217 0.0627386 0.00961" rpy="${pi} 0 -${pi/2}"/>
@@ -119,16 +130,6 @@
         </material>
         </visual>
 
-        <!-- Part base_floor_1 -->
-        <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry>
-            <mesh filename="package://gizmo_description/meshes/base_floor_1.stl"/>
-        </geometry>
-        <material name="base_floor_1_material">
-            <color rgba="0.121569 0.133333 0.14902 1"/>
-        </material>
-        </visual>
 
         <!-- Part servo_bracket_r -->
         <visual>

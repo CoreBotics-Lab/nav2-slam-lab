@@ -23,28 +23,6 @@
       </geometry>
     </collision>
 
-    <!-- Part 25t_servo_horn_r -->
-    <visual>
-      <origin xyz="0 0.00699 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://gizmo_description/meshes/25t_servo_horn_r.stl"/>
-      </geometry>
-      <material name="25t_servo_horn_r_material">
-        <color rgba="0.960784 0.960784 0.964706 1"/>
-      </material>
-    </visual>
-
-    <!-- Part servo_horn_adapter_wheel70mm__r -->
-    <visual>
-      <origin xyz="0 0.0045 0" rpy="0 0 0"/>
-      <geometry>
-        <mesh filename="package://gizmo_description/meshes/servo_horn_adapter_wheel70mm__r.stl"/>
-      </geometry>
-      <material name="servo_horn_adapter_wheel70mm__r_material">
-        <color rgba="0.615686 0.811765 0.929412 1"/>
-      </material>
-    </visual>
-
     <!-- Part rim_2 -->
     <visual>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -64,6 +42,28 @@
       </geometry>
       <material name="tire_2_material">
         <color rgba="0.0784314 0.0784314 0.0784314 1"/>
+      </material>
+    </visual>
+
+    <!-- Part 25t_servo_horn_r -->
+    <visual>
+      <origin xyz="0 0.00699 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://gizmo_description/meshes/25t_servo_horn_r.stl"/>
+      </geometry>
+      <material name="25t_servo_horn_r_material">
+        <color rgba="0.960784 0.960784 0.964706 1"/>
+      </material>
+    </visual>
+
+    <!-- Part servo_horn_adapter_wheel70mm__r -->
+    <visual>
+      <origin xyz="0 0.0045 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://gizmo_description/meshes/servo_horn_adapter_wheel70mm__r.stl"/>
+      </geometry>
+      <material name="servo_horn_adapter_wheel70mm__r_material">
+        <color rgba="0.615686 0.811765 0.929412 1"/>
       </material>
     </visual>
 

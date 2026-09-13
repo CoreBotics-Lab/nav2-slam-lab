@@ -19,17 +19,6 @@
             </geometry>
         </collision>
 
-        <!-- Part caster_ball -->
-        <visual>
-        <origin xyz="0 0 0" rpy="0 0 0"/>
-        <geometry>
-            <mesh filename="package://gizmo_description/meshes/caster_ball.stl"/>
-        </geometry>
-        <material name="caster_ball_material">
-            <color rgba="0.301961 0.301961 0.301961 1"/>
-        </material>
-        </visual>
-
         <!-- Part caster_frame -->
         <visual>
         <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -38,6 +27,17 @@
         </geometry>
         <material name="caster_frame_material">
             <color rgba="0.141176 0.694118 0.65098 1"/>
+        </material>
+        </visual>
+
+        <!-- Part caster_ball -->
+        <visual>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <geometry>
+            <mesh filename="package://gizmo_description/meshes/caster_ball.stl"/>
+        </geometry>
+        <material name="caster_ball_material">
+            <color rgba="0.301961 0.301961 0.301961 1"/>
         </material>
         </visual>
 
