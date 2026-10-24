@@ -2,6 +2,12 @@
 build/
 install/
 log/
+_legacy_build/
+_legacy_install/
+_legacy_log/
+
+# Pixi environment
+.pixi/
 
 # Python cache & artifacts
 __pycache__/
