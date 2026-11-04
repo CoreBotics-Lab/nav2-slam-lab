@@ -6,7 +6,7 @@ from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from geometry_msgs.msg import PoseStamped
 import builtin_interfaces.msg
 from tf_transformations import quaternion_from_euler
-import yaml
+import yaml #type: ignore
 from nav_msgs.msg import Goals
 
 def _set_pose(_frame_id: str, _timeStamp: builtin_interfaces.msg.Time, _xy: list, quat: list) -> PoseStamped:
