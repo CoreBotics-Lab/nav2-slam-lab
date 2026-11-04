@@ -2,41 +2,29 @@ import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
-from launch.conditions import IfCondition
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression, Command
 from launch_ros.parameter_descriptions import ParameterValue
+
 
 def generate_launch_description():
     gizmo_gazebo_dir = get_package_share_directory('gizmo_gazebo')
     gizmo_description_dir = get_package_share_directory('gizmo_description')
     ros_gz_package_dir = get_package_share_directory('ros_gz_sim')
 
-    launch_arg_run_rviz2 = DeclareLaunchArgument(
-        'run_rviz2',
+    launch_arg_use_sim_time = DeclareLaunchArgument(
+        'use_sim_time',
         default_value='true',
-        description='Run RViz2 if true'
+        description='Use simulation (Gazebo) clock if true'
     )
-    run_rviz2 = LaunchConfiguration('run_rviz2')
+    use_sim_time = LaunchConfiguration('use_sim_time')
 
     launch_arg_headless = DeclareLaunchArgument(
         'headless',
-        default_value='False',
+        default_value='false',
         description='Run Gazebo without the GUI'
     )
-
-    default_rviz_config = os.path.join(
-        gizmo_gazebo_dir,
-        'rviz',
-        'gazebo.rviz'
-    )
-    launch_arg_rviz_config = DeclareLaunchArgument(
-        'rviz_config',
-        default_value=default_rviz_config,
-        description='Full path to the RViz configuration file.'
-    )
-    rviz_config = LaunchConfiguration('rviz_config')
 
     launch_arg_world_file = DeclareLaunchArgument(
         'world_file',
@@ -73,6 +61,34 @@ def generate_launch_description():
     )
     use_imu = LaunchConfiguration('use_imu')
 
+    launch_arg_spawn_x = DeclareLaunchArgument(
+        'spawn_x',
+        default_value='0.0',
+        description='Initial x spawn coordinate of the robot in meters'
+    )
+    spawn_x = LaunchConfiguration('spawn_x')
+
+    launch_arg_spawn_y = DeclareLaunchArgument(
+        'spawn_y',
+        default_value='0.0',
+        description='Initial y spawn coordinate of the robot in meters'
+    )
+    spawn_y = LaunchConfiguration('spawn_y')
+
+    launch_arg_spawn_z = DeclareLaunchArgument(
+        'spawn_z',
+        default_value='0.1',
+        description='Initial z spawn coordinate of the robot in meters'
+    )
+    spawn_z = LaunchConfiguration('spawn_z')
+
+    launch_arg_spawn_yaw = DeclareLaunchArgument(
+        'spawn_yaw',
+        default_value='0.0',
+        description='Initial yaw orientation of the robot in radians'
+    )
+    spawn_yaw = LaunchConfiguration('spawn_yaw')
+
     gizmo_parent_dir = os.path.dirname(gizmo_description_dir)
 
     env_gz_resource_path = SetEnvironmentVariable(
@@ -104,24 +120,7 @@ def generate_launch_description():
         name='robot_state_publisher',
         output='screen',
         parameters=[
-            {'robot_description': robot_description, 'use_sim_time': True}
-        ]
-    )
-
-    rviz2 = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        output='screen',
-        arguments=['-d', rviz_config],
-        parameters=[{'use_sim_time': True}]
-    )
-
-    rviz_group = GroupAction(
-        condition=IfCondition(run_rviz2),
-        actions=[
-            launch_arg_rviz_config,
-            rviz2
+            {'robot_description': robot_description, 'use_sim_time': use_sim_time}
         ]
     )
 
@@ -137,7 +136,7 @@ def generate_launch_description():
         name='clock_bridge',
         parameters=[{
             'config_file': bridge_config_file,
-            'use_sim_time': True
+            'use_sim_time': use_sim_time
         }]
     )
 
@@ -160,9 +159,10 @@ def generate_launch_description():
         executable='create',
         arguments=[
             '-name', 'gizmo',
-            '-x', '0.0',
-            '-y', '0.0',
-            '-z', '0.1',
+            '-x', spawn_x,
+            '-y', spawn_y,
+            '-z', spawn_z,
+            '-Y', spawn_yaw,
             '-topic', 'robot_description',
             '-world', 'empty'
         ],
@@ -181,23 +181,26 @@ def generate_launch_description():
         output='screen',
         parameters=[
             ekf_config_file,
-            {'use_sim_time': True}
+            {'use_sim_time': use_sim_time}
         ]
     )
 
     return LaunchDescription([
-        launch_arg_run_rviz2,
+        launch_arg_use_sim_time,
         launch_arg_headless,
         launch_arg_world_file,
         launch_arg_camera_type,
         launch_arg_use_lidar,
         launch_arg_use_camera,
         launch_arg_use_imu,
+        launch_arg_spawn_x,
+        launch_arg_spawn_y,
+        launch_arg_spawn_z,
+        launch_arg_spawn_yaw,
         env_gz_resource_path,
+        robot_state_publisher,
         gazebo_clock_bridge,
         gz_sim,
         gz_spawn_entity,
-        robot_state_publisher,
-        ekf_node,
-        rviz_group,
+        ekf_node
     ])

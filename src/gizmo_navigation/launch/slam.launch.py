@@ -1,45 +1,21 @@
+#!/usr/bin/env python3
+
 import os
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
-def generate_launch_description():
-    gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
+def launch_setup(context, *args, **kwargs):
+    use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
+    slam_params_file = LaunchConfiguration('slam_params_file').perform(context)
+    autostart = LaunchConfiguration('autostart').perform(context).lower() == 'true'
 
-    # 1. Declare Launch Arguments
-    use_sim_time_arg = DeclareLaunchArgument(
-        'use_sim_time',
-        default_value='true',
-        description='Use simulation (Gazebo) clock if true'
-    )
-    use_sim_time = LaunchConfiguration('use_sim_time')
-
-    default_slam_params = os.path.join(
-        gizmo_navigation_dir,
-        'config',
-        'slam_toolbox.yaml'
-    )
-    slam_params_file_arg = DeclareLaunchArgument(
-        'slam_params_file',
-        default_value=default_slam_params,
-        description='Full path to the ROS 2 parameters file for slam_toolbox'
-    )
-    slam_params_file = LaunchConfiguration('slam_params_file')
-
-    autostart_arg = DeclareLaunchArgument(
-        'autostart',
-        default_value='true',
-        description='Automatically startup the SLAM lifecycle stack'
-    )
-    autostart = LaunchConfiguration('autostart')
-
-    # 2. Lifecycle nodes for SLAM
     lifecycle_nodes = ['slam_toolbox']
 
-    # 3. SLAM Toolbox Node (Online Asynchronous)
+    # 1. SLAM Toolbox Node (Online Asynchronous)
     start_async_slam_toolbox_node = Node(
         package='slam_toolbox',
         executable='async_slam_toolbox_node',
@@ -51,7 +27,7 @@ def generate_launch_description():
         ]
     )
 
-    # 4. Lifecycle Manager for SLAM
+    # 2. Lifecycle Manager for SLAM
     start_lifecycle_manager = Node(
         package='nav2_lifecycle_manager',
         executable='lifecycle_manager',
@@ -67,11 +43,33 @@ def generate_launch_description():
         }]
     )
 
-    return LaunchDescription([
-        use_sim_time_arg,
-        slam_params_file_arg,
-        autostart_arg,
-        start_async_slam_toolbox_node,
-        start_lifecycle_manager
-    ])
+    return [start_async_slam_toolbox_node, start_lifecycle_manager]
 
+
+def generate_launch_description():
+    gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
+
+    default_slam_params = os.path.join(
+        gizmo_navigation_dir,
+        'config',
+        'slam_toolbox.yaml'
+    )
+
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            'use_sim_time',
+            default_value='true',
+            description='Use simulation (Gazebo) clock if true'
+        ),
+        DeclareLaunchArgument(
+            'slam_params_file',
+            default_value=default_slam_params,
+            description='Full path to the parameters file for slam_toolbox'
+        ),
+        DeclareLaunchArgument(
+            'autostart',
+            default_value='true',
+            description='Automatically startup the SLAM lifecycle stack'
+        ),
+        OpaqueFunction(function=launch_setup)
+    ])
