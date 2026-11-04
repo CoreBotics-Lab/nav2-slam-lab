@@ -11,9 +11,10 @@ from launch_ros.actions import Node
 
 
 def launch_setup(context, *args, **kwargs):
+    gizmo_mapping_dir = get_package_share_directory('gizmo_mapping')
     gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
 
-    slam = LaunchConfiguration('slam').perform(context).lower() == 'true'
+    mode = LaunchConfiguration('mode').perform(context).lower()
     use_sim_time = LaunchConfiguration('use_sim_time').perform(context).lower() == 'true'
     map_file = LaunchConfiguration('map').perform(context)
     params_file = LaunchConfiguration('params_file').perform(context)
@@ -22,14 +23,18 @@ def launch_setup(context, *args, **kwargs):
     use_rviz = LaunchConfiguration('use_rviz').perform(context).lower() == 'true'
     rviz_config = LaunchConfiguration('rviz_config').perform(context)
 
-    slam_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'slam.launch.py')
+    slam_launch_path = os.path.join(gizmo_mapping_dir, 'launch', 'slam.launch.py')
     localization_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'localization.launch.py')
     navigation_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'navigation.launch.py')
 
+    # Unified RViz configuration for both localization and mapping
+    if not rviz_config:
+        rviz_config = os.path.join(gizmo_navigation_dir, 'rviz', 'nav2.rviz')
+
     actions: list[Action] = []
 
-    # 1. Mapping vs. Localization
-    if slam:
+    # 1. SLAM (Mapping) or AMCL (Localization)
+    if mode == 'mapping':
         actions.append(
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(slam_launch_path),
@@ -40,7 +45,7 @@ def launch_setup(context, *args, **kwargs):
                 }.items()
             )
         )
-    else:
+    elif mode == 'localization':
         actions.append(
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(localization_launch_path),
@@ -52,8 +57,10 @@ def launch_setup(context, *args, **kwargs):
                 }.items()
             )
         )
+    else:
+        raise RuntimeError(f"Invalid mode '{mode}'. Expected 'localization' or 'mapping'.")
 
-    # 2. Nav2 Navigation Stack (Standalone)
+    # 2. Nav2 Navigation Stack (Planner, Controller, BT Navigator, Smoother, Recoveries)
     actions.append(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(navigation_launch_path),
@@ -82,10 +89,11 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
+    gizmo_mapping_dir = get_package_share_directory('gizmo_mapping')
     gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
 
     default_map_file = os.path.join(
-        gizmo_navigation_dir,
+        gizmo_mapping_dir,
         'maps',
         'simple_bigger_world_map.yaml'
     )
@@ -95,21 +103,17 @@ def generate_launch_description():
         'nav2.yaml'
     )
     default_slam_params = os.path.join(
-        gizmo_navigation_dir,
+        gizmo_mapping_dir,
         'config',
         'slam_toolbox.yaml'
-    )
-    default_rviz_config = os.path.join(
-        gizmo_navigation_dir,
-        'rviz',
-        'nav2.rviz'
     )
 
     return LaunchDescription([
         DeclareLaunchArgument(
-            'slam',
-            default_value='false',
-            description='Whether to run SLAM (true) or Localization (false)'
+            'mode',
+            default_value='localization',
+            choices=['localization', 'mapping'],
+            description='Operating mode: "localization" (pre-loaded map + AMCL) or "mapping" (online SLAM Toolbox)'
         ),
         DeclareLaunchArgument(
             'use_sim_time',
@@ -119,32 +123,33 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'map',
             default_value=default_map_file,
-            description='Full path to the map YAML file to load (for localization)'
+            description='Full path to map YAML file (used when mode:=localization)'
         ),
         DeclareLaunchArgument(
             'params_file',
             default_value=default_nav2_params,
-            description='Full path to the Nav2 parameters YAML file'
+            description='Full path to Nav2 parameters file'
         ),
         DeclareLaunchArgument(
             'slam_params_file',
             default_value=default_slam_params,
-            description='Full path to the parameters file for slam_toolbox'
+            description='Full path to SLAM Toolbox parameters file (used when mode:=mapping)'
         ),
         DeclareLaunchArgument(
             'autostart',
             default_value='true',
-            description='Automatically startup the nav2 stack'
+            description='Automatically startup the Nav2 lifecycle stack'
         ),
         DeclareLaunchArgument(
             'use_rviz',
             default_value='true',
-            description='Whether to start RViz'
+            description='Whether to start RViz2'
         ),
         DeclareLaunchArgument(
             'rviz_config',
-            default_value=default_rviz_config,
-            description='Full path to the RViz configuration file'
+            default_value='',
+            description='Optional custom RViz config file path. Defaults to gizmo_navigation/rviz/nav2.rviz.'
         ),
         OpaqueFunction(function=launch_setup)
     ])
+
