@@ -23,7 +23,12 @@ def launch_setup(context, *args, **kwargs):
         output='screen',
         parameters=[
             params_file,
-            {'yaml_filename': map_file, 'use_sim_time': use_sim_time}
+            {
+                'yaml_filename': map_file,
+                'topic_name': 'map',
+                'frame_id': 'map',
+                'use_sim_time': use_sim_time
+            }
         ]
     )
 
@@ -35,7 +40,8 @@ def launch_setup(context, *args, **kwargs):
         parameters=[
             params_file,
             {'use_sim_time': use_sim_time}
-        ]
+        ],
+        remappings=[('scan', '/scan')]
     )
 
     lifecycle_manager_node = Node(
@@ -57,10 +63,11 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
+    gizmo_mapping_dir = get_package_share_directory('gizmo_mapping')
     gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
 
     default_map_file = os.path.join(
-        gizmo_navigation_dir,
+        gizmo_mapping_dir,
         'maps',
         'simple_bigger_world_map.yaml'
     )

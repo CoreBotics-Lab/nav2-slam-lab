@@ -11,7 +11,6 @@ find_package(rclcpp REQUIRED)
 install(DIRECTORY
   config
   launch
-  maps
   rviz
   DESTINATION share/${PROJECT_NAME}
 )

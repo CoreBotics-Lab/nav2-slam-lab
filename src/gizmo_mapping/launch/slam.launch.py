@@ -47,10 +47,10 @@ def launch_setup(context, *args, **kwargs):
 
 
 def generate_launch_description():
-    gizmo_navigation_dir = get_package_share_directory('gizmo_navigation')
+    gizmo_mapping_dir = get_package_share_directory('gizmo_mapping')
 
     default_slam_params = os.path.join(
-        gizmo_navigation_dir,
+        gizmo_mapping_dir,
         'config',
         'slam_toolbox.yaml'
     )

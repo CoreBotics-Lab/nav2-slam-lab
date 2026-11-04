@@ -26,6 +26,7 @@
   <depend>nav2_rviz_plugins</depend>
   <depend>gizmo_description</depend>
   <depend>gizmo_gazebo</depend>
+  <depend>gizmo_mapping</depend>
 
   <exec_depend>rviz2</exec_depend>
 
