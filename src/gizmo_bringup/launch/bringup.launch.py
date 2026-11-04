@@ -19,6 +19,8 @@ def launch_setup(context, *args, **kwargs):
     map_file = LaunchConfiguration('map').perform(context)
     params_file = LaunchConfiguration('params_file').perform(context)
     slam_params_file = LaunchConfiguration('slam_params_file').perform(context)
+    keepout = LaunchConfiguration('keepout').perform(context).lower() == 'true'
+    mask_file = LaunchConfiguration('mask').perform(context)
     autostart = LaunchConfiguration('autostart').perform(context).lower() == 'true'
     use_rviz = LaunchConfiguration('use_rviz').perform(context).lower() == 'true'
     rviz_config = LaunchConfiguration('rviz_config').perform(context)
@@ -26,6 +28,7 @@ def launch_setup(context, *args, **kwargs):
     slam_launch_path = os.path.join(gizmo_mapping_dir, 'launch', 'slam.launch.py')
     localization_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'localization.launch.py')
     navigation_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'navigation.launch.py')
+    keepout_launch_path = os.path.join(gizmo_navigation_dir, 'launch', 'costmap_keepout_filter.launch.py')
 
     # Unified RViz configuration for both localization and mapping
     if not rviz_config:
@@ -60,7 +63,21 @@ def launch_setup(context, *args, **kwargs):
     else:
         raise RuntimeError(f"Invalid mode '{mode}'. Expected 'localization' or 'mapping'.")
 
-    # 2. Nav2 Navigation Stack (Planner, Controller, BT Navigator, Smoother, Recoveries)
+    # 2. Keepout Zone Costmap Filter
+    if keepout:
+        actions.append(
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(keepout_launch_path),
+                launch_arguments={
+                    'use_sim_time': str(use_sim_time).lower(),
+                    'params_file': params_file,
+                    'mask': mask_file,
+                    'autostart': str(autostart).lower()
+                }.items()
+            )
+        )
+
+    # 3. Nav2 Navigation Stack (Planner, Controller, BT Navigator, Smoother, Recoveries)
     actions.append(
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(navigation_launch_path),
@@ -72,7 +89,7 @@ def launch_setup(context, *args, **kwargs):
         )
     )
 
-    # 3. RViz2 Dashboard
+    # 4. RViz2 Dashboard
     if use_rviz:
         actions.append(
             Node(
@@ -107,6 +124,11 @@ def generate_launch_description():
         'config',
         'slam_toolbox.yaml'
     )
+    default_mask_file = os.path.join(
+        gizmo_mapping_dir,
+        'maps',
+        'simple_bigger_world_map_keepout.yaml'
+    )
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -134,6 +156,16 @@ def generate_launch_description():
             'slam_params_file',
             default_value=default_slam_params,
             description='Full path to SLAM Toolbox parameters file (used when mode:=mapping)'
+        ),
+        DeclareLaunchArgument(
+            'keepout',
+            default_value='true',
+            description='Whether to activate keepout zones costmap filter'
+        ),
+        DeclareLaunchArgument(
+            'mask',
+            default_value=default_mask_file,
+            description='Full path to filter mask YAML file'
         ),
         DeclareLaunchArgument(
             'autostart',

@@ -17,6 +17,8 @@ def launch_setup(context, *args, **kwargs):
     map_file = LaunchConfiguration('map').perform(context)
     params_file = LaunchConfiguration('params_file').perform(context)
     slam_params_file = LaunchConfiguration('slam_params_file').perform(context)
+    keepout = LaunchConfiguration('keepout').perform(context).lower() == 'true'
+    mask_file = LaunchConfiguration('mask').perform(context)
     headless = LaunchConfiguration('headless').perform(context).lower() == 'true'
     gazebo_delay = float(LaunchConfiguration('gazebo_delay').perform(context))
     use_rviz = LaunchConfiguration('use_rviz').perform(context).lower() == 'true'
@@ -50,6 +52,8 @@ def launch_setup(context, *args, **kwargs):
             'map': map_file,
             'params_file': params_file,
             'slam_params_file': slam_params_file,
+            'keepout': str(keepout).lower(),
+            'mask': mask_file,
             'use_sim_time': 'true',
             'use_rviz': str(use_rviz).lower(),
             'rviz_config': rviz_config,
@@ -84,6 +88,11 @@ def generate_launch_description():
         'config',
         'slam_toolbox.yaml'
     )
+    default_mask_file = os.path.join(
+        gizmo_mapping_dir,
+        'maps',
+        'simple_bigger_world_map_keepout.yaml'
+    )
 
     return LaunchDescription([
         DeclareLaunchArgument(
@@ -111,6 +120,16 @@ def generate_launch_description():
             'slam_params_file',
             default_value=default_slam_params,
             description='Full path to SLAM Toolbox parameters file (used when mode:=mapping)'
+        ),
+        DeclareLaunchArgument(
+            'keepout',
+            default_value='true',
+            description='Whether to activate keepout zones costmap filter'
+        ),
+        DeclareLaunchArgument(
+            'mask',
+            default_value=default_mask_file,
+            description='Full path to filter mask YAML file'
         ),
         DeclareLaunchArgument(
             'headless',
