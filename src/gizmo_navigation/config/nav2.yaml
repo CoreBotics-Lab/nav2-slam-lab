@@ -57,11 +57,9 @@ bt_navigator:
     filter_duration: 0.3
     default_server_timeout: 20
     default_cancel_timeout: 50
-    wait_for_service_timeout: 10000
+    wait_for_service_timeout: 30000
     introspection_mode: "disabled"
     navigators: ["navigate_to_pose", "navigate_through_poses"]
-    bt_search_directories:
-      - /opt/ros/lyrical/share/nav2_bt_navigator/behavior_trees
     navigate_to_pose:
       plugin: "nav2_bt_navigator::NavigateToPoseNavigator"
       enable_groot_monitoring: false
@@ -122,65 +120,46 @@ controller_server:
       plugin: "nav2_controller::FeasiblePathHandler"
       prune_distance: 2.0
       enforce_path_inversion: false
-      enforce_path_rotation: false
+      enforce_path_rotation: true
       inversion_xy_tolerance: 0.2
       inversion_yaw_tolerance: 0.4
       minimum_rotation_angle: 0.785
       reject_unit_path: false
 
     FollowPath:
-      plugin: "dwb_core::DWBLocalPlanner"
-      debug_trajectory_details: true
-      min_vel_x: -0.15    # Allow reversing at up to 0.15 m/s when trapped!
-      min_vel_y: 0.0
-      max_vel_x: 0.55     # 150 RPM with 0.07m diameter wheels (2.5 rps * pi * 0.07m)
-      max_vel_y: 0.0
-      max_vel_theta: 3.14
-      min_speed_xy: 0.0
-      max_speed_xy: 0.55
-      min_speed_theta: 0.0
-      acc_lim_x: 2.5
-      acc_lim_y: 0.0
-      acc_lim_theta: 5.0
-      decel_lim_x: -2.5
-      decel_lim_y: 0.0
-      decel_lim_theta: -5.0
-      vx_samples: 20
-      vy_samples: 0
-      vtheta_samples: 40
-      sim_time: 1.0
-      linear_granularity: 0.05
-      angular_granularity: 0.025
-      transform_tolerance: 0.2
-      xy_goal_tolerance: 0.05
-      trans_stopped_velocity: 0.1
-      short_circuit_trajectory_evaluation: false
-      stateful: true
-      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "GoalAlign", "PathAlign", "PathDist", "GoalDist"]
-      BaseObstacle.scale: 0.02
-      PathAlign.scale: 8.0
-      PathAlign.forward_point_distance: 0.05
-      GoalAlign.scale: 6.0
-      GoalAlign.forward_point_distance: 0.05
-      PathDist.scale: 24.0
-      GoalDist.scale: 24.0
-      RotateToGoal.scale: 32.0
-      RotateToGoal.slowing_factor: 5.0
-      RotateToGoal.lookahead_time: -1.0
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 0.35
+      lookahead_dist: 0.4
+      min_lookahead_dist: 0.2
+      max_lookahead_dist: 0.6
+      lookahead_time: 1.0
+      rotate_to_heading_angular_vel: 1.5
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 0.6
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: false
+      regulated_linear_scaling_min_radius: 0.5
+      regulated_linear_scaling_min_speed: 0.10
+      use_rotate_to_heading: true
+      rotate_to_heading_min_angle: 0.785
+      max_robot_pose_search_dist: 10.0
 
 local_costmap:
   local_costmap:
     ros__parameters:
       use_sim_time: true
-      update_frequency: 5.0
-      publish_frequency: 2.0
+      update_frequency: 10.0
+      publish_frequency: 5.0
       global_frame: odom
       robot_base_frame: base_footprint
       rolling_window: true
       width: 3
       height: 3
       resolution: 0.05
-      robot_radius: 0.11         # Sized to circumscribe 0.150m diameter base + wheels (10.65cm envelope)
+      robot_radius: 0.10
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
@@ -198,8 +177,8 @@ local_costmap:
           obstacle_min_range: 0.08
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0   # Fast decay creates a tight 22cm buffer around obstacles
-        inflation_radius: 0.22      # Perfectly sized for Gizmo's 11cm radius
+        cost_scaling_factor: 7.0
+        inflation_radius: 0.25
       always_send_full_costmap: true
       introspection_mode: "disabled"
 
@@ -207,14 +186,21 @@ global_costmap:
   global_costmap:
     ros__parameters:
       use_sim_time: true
-      update_frequency: 1.0
-      publish_frequency: 1.0
+      update_frequency: 2.0
+      publish_frequency: 2.0
       global_frame: map
       robot_base_frame: base_footprint
-      robot_radius: 0.11         # Sized to circumscribe 0.150m diameter base + wheels (10.65cm envelope)
+      robot_radius: 0.10
       resolution: 0.05
       track_unknown_space: true
       plugins: ["static_layer", "obstacle_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+        enabled: true
+        subscribe_to_updates: true
+        transform_tolerance: 1.0
+        map_topic: /map
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: true
@@ -229,13 +215,10 @@ global_costmap:
           raytrace_min_range: 0.08
           obstacle_max_range: 8.0
           obstacle_min_range: 0.08
-      static_layer:
-        plugin: "nav2_costmap_2d::StaticLayer"
-        map_subscribe_transient_local: true
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
-        cost_scaling_factor: 5.0   # Synced with local costmap
-        inflation_radius: 0.22      # Synced with local costmap
+        cost_scaling_factor: 3.5
+        inflation_radius: 0.40
       always_send_full_costmap: true
       introspection_mode: "disabled"
 
@@ -264,11 +247,9 @@ planner_server:
     introspection_mode: "disabled"
     GridBased:
       plugin: "nav2_navfn_planner::NavfnPlanner"
-      # tolerance: 0.5
-      tolerance: 0.25
-      # use_astar: false
-      use_astar: true         # A* plans clean, direct paths instead of loopy Dijkstra curves
-      max_cycles_factor: 10   # Prevents "path extraction exhausted" on long routes
+      tolerance: 0.00
+      use_astar: true
+      max_cycles_factor: 10
       allow_unknown: true
 
 smoother_server:
