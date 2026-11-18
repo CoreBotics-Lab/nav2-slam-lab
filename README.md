@@ -27,16 +27,17 @@ ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
 * When RViz opens, select **2D Goal Pose** on the top toolbar and set a goal into unknown space.
 * Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the map.
 
-### 4. Execute Autonomous Waypoint Patrol from Python
+### 4. Autonomous Navigation with Keepout Zones (Costmap Filter)
+Launch navigation with keepout zones enabled (enabled by default, explicitly controllable via `keepout`):
+```bash
+ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=true
+```
+* When setting navigation goals near restricted zones, the costmap inflation layer inflates the keepout boundaries, safely routing the planner and controller around restricted areas.
+
+### 5. Execute Autonomous Waypoint Patrol from Python
 While the navigation stack is active, run the waypoint mission script:
 ```bash
-python3 src/gizmo_scripts/gizmo_scripts/practice/waypointFromYaml.py
-```
-
-### 5. Save the Generated Map
-Save the SLAM occupancy grid map to disk:
-```bash
-ros2 run nav2_map_server map_saver_cli -f src/gizmo_mapping/maps/my_new_map
+ros2 run gizmo_scripts waypointFromYaml
 ```
 
 ---
@@ -50,7 +51,7 @@ The Gizmo software architecture consists of modular functional layers: physics s
                                                    │
                                ┌───────────────────┴───────────────────┐
                                ▼                                       ▼
-                     [Online SLAM / AMCL]                     [nav2_container]
+                     [Online SLAM / AMCL]                 [Nav2 Navigation Stack]
                    ┌───────────────────────┐         ┌─────────────────────────────────┐
                    │ • slam_toolbox (SLAM) │         │ • controller_server (RPP)       │
                    │ • nav2_amcl (Loc)     │         │ • planner_server (NavFn)        │
@@ -96,9 +97,10 @@ The workspace provides launch pipelines structured across 3 architectural layers
   └── bringup.launch.py    (Hardware-agnostic: Mapping [SLAM] or Localization [AMCL] + Nav2 + RViz2)
 
 [Layer 2: Core Subsystems]
-  ├── navigation.launch.py   (Nav2 5-server stack: Composed or Standalone)
-  ├── slam.launch.py         (SLAM Toolbox async mapping + lifecycle management)
-  └── localization.launch.py (Map Server + AMCL particle filter localization)
+  ├── navigation.launch.py             (Nav2 standalone 5-server lifecycle stack)
+  ├── costmap_keepout_filter.launch.py (Keepout zone filter mask & metadata server)
+  ├── slam.launch.py                   (SLAM Toolbox async mapping + lifecycle management)
+  └── localization.launch.py           (Map Server + AMCL particle filter localization)
 
 [Layer 1: Simulation & Kinematics]
   ├── gazebo.launch.py                   (Base simulator + ros_gz_bridge + EKF)
@@ -118,6 +120,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
   1. Spawns the Gazebo physics simulation via `gazebo.launch.py` with the selected world (default `simpleBiggerWorld.sdf`).
   2. Applies a `TimerAction(period=5.0)` delay allowing Gazebo physics, the simulation `/clock`, sensor bridges (`/scan`, `/imu/data`), and EKF odometry (`odom -> base_footprint`) to stabilize.
   3. Includes `bringup.launch.py` with `use_sim_time:=true` in either `localization` or `mapping` mode.
+  4. Automatically activates the costmap keepout filter pipeline when `keepout:=true` (default).
 * **Commands**:
   ```bash
   # Autonomous Navigation with pre-built map (AMCL + Map Server + Nav2):
@@ -128,6 +131,9 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
   # Headless execution (without Gazebo GUI):
   ros2 launch gizmo_bringup simulation.launch.py mode:=localization headless:=true
+
+  # Disable keepout zone costmap filters:
+  ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=false
   ```
 
 ---
@@ -138,6 +144,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
   * Evaluates the `mode` parameter:
     * `mode:=localization`: Includes `localization.launch.py` from `gizmo_navigation` to run `map_server` and `nav2_amcl`.
     * `mode:=mapping`: Includes `slam.launch.py` from `gizmo_mapping` to run `async_slam_toolbox_node`.
+  * Evaluates `keepout`: When `true` (default), includes `costmap_keepout_filter.launch.py` to broadcast the mask and filter info metadata.
   * Includes `navigation.launch.py` to start the Nav2 controller, planner, behavior server, and BT navigator.
   * Launches RViz2 using the unified configuration [`src/gizmo_navigation/rviz/nav2.rviz`](src/gizmo_navigation/rviz/nav2.rviz) with full Nav2 Goal tooling, costmaps, and real-time path visualizers.
 * **Commands**:
@@ -156,14 +163,13 @@ The workspace provides launch pipelines structured across 3 architectural layers
 #### 3. `navigation.launch.py` (`gizmo_navigation`)
 * **Purpose**: Launches the core Nav2 autonomous navigation engine.
 * **Mechanism**:
-  * **Composed Mode (`use_composition:=true`, Default)**: Loads the 5 core navigation servers as composable nodes inside a single `component_container` with isolated single-threaded executors:
-    * `nav2_controller::ControllerServer`: Configured with `nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController` running at $20\text{ Hz}$ with in-place rotation to heading, lookahead distance scaling, and curvature regulation.
-    * `nav2_planner::PlannerServer`: NavFn global Dijkstra/A* path planner operating on the global costmap.
-    * `behavior_server::BehaviorServer`: Recovery behaviors (`Spin`, `BackUp`, `Wait`).
-    * `nav2_bt_navigator::BtNavigator`: Behavior Tree engine executing `navigate_to_pose` logic.
-    * `nav2_waypoint_follower::WaypointFollower`: Sequential multi-pose dispatcher.
-  * **Standalone Mode (`use_composition:=false`)**: Spawns each server as an independent OS process for targeted debugging.
-  * **Lifecycle Management**: Managed by `lifecycle_manager_navigation` with zero bond timeouts (`bond_timeout: 0.0`) to avoid transient network timeouts.
+  * **Standalone Modular Multi-Process Architecture**: Executes the 5 core navigation servers as dedicated, isolated OS processes managed by `nav2_lifecycle_manager`:
+    * `controller_server` (`nav2_controller::ControllerServer`): Configured with `nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController` running at $20\text{ Hz}$ with in-place rotation to heading, lookahead distance scaling ($0.2\text{ m}$ to $0.6\text{ m}$), curvature velocity regulation, and forward collision detection.
+    * `planner_server` (`nav2_planner::PlannerServer`): NavFn global Dijkstra/A* path planner operating on the 2D global costmap.
+    * `behavior_server` (`nav2_behaviors::BehaviorServer`): Recovery and navigation behaviors (`Spin`, `BackUp`, `Wait`).
+    * `bt_navigator` (`nav2_bt_navigator::BtNavigator`): Behavior Tree engine executing XML navigation trees (`NavigateThroughPosesWReplanningAndRecovery` / `NavigateToPose`).
+    * `waypoint_follower` (`nav2_waypoint_follower::WaypointFollower`): Sequential multi-pose dispatcher.
+  * **Lifecycle Management**: Managed by `lifecycle_manager_navigation` with zero bond timeouts (`bond_timeout: 0.0`) for deterministic startup and simulation stability.
 * **Command**:
   ```bash
   ros2 launch gizmo_navigation navigation.launch.py
@@ -171,7 +177,21 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 ---
 
-#### 4. `slam.launch.py` (`gizmo_mapping`)
+#### 4. `costmap_keepout_filter.launch.py` (`gizmo_navigation`)
+* **Purpose**: Publishes costmap filter masks and metadata to enforce keepout zones and restricted navigation regions.
+* **Mechanism**:
+  * `filter_mask_server` (`nav2_map_server`): Loads the binary keepout mask occupancy grid (`simple_bigger_world_map_keepout.yaml`) and broadcasts it on `/keepout_filter_mask`.
+  * `costmap_filter_info_server` (`nav2_map_server`): Publishes filter metadata (`type: 0` for keepout zone) on `/costmap_filter_info`.
+  * `lifecycle_manager_costmap_filter`: Deterministically transitions both mask servers to the active lifecycle state.
+  * **Pipeline Sequencing**: In `nav2.yaml`, the `keepout_filter` plugin is ordered directly before `inflation_layer` (`plugins: ["static_layer", "obstacle_layer", "keepout_filter", "inflation_layer"]`). This allows the inflation layer to expand safety padding outward from keepout boundaries, preventing the global planner from planning tangent to lethal edges and preventing controller collision aborts.
+* **Command**:
+  ```bash
+  ros2 launch gizmo_navigation costmap_keepout_filter.launch.py
+  ```
+
+---
+
+#### 5. `slam.launch.py` (`gizmo_mapping`)
 * **Purpose**: Performs 2D Simultaneous Localization and Mapping in unknown environments.
 * **Mechanism**:
   * Executes `async_slam_toolbox_node` using Google Ceres Solver non-linear graph optimization.
@@ -184,7 +204,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 ---
 
-#### 5. `localization.launch.py` (`gizmo_navigation`)
+#### 6. `localization.launch.py` (`gizmo_navigation`)
 * **Purpose**: Global localization against a known, pre-recorded occupancy grid map.
 * **Mechanism**:
   * `nav2_map_server`: Loads the occupancy grid `.yaml` and `.pgm` files from disk and broadcasts the static `/map` topic with Transient Local QoS.
@@ -199,7 +219,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 ### Layer 1: Simulation & Kinematics
 
-#### 6. `gazebo.launch.py` (`gizmo_gazebo`)
+#### 7. `gazebo.launch.py` (`gizmo_gazebo`)
 * **Purpose**: Base simulation runtime managing physics, kinematics, sensor simulation, and odometry estimation.
 * **Mechanism**: Starts Gazebo Sim, evaluates the robot Xacro model, spawns the robot entity, configures the `ros_gz_bridge` transport bridge, and runs `robot_localization` EKF fusing wheel odometry and IMU angular velocity.
 * **Command**:
@@ -209,7 +229,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 ---
 
-#### 7. `gazebo_simpleBiggerWorld.launch.py` (`gizmo_gazebo`)
+#### 8. `gazebo_simpleBiggerWorld.launch.py` (`gizmo_gazebo`)
 * **Purpose**: Convenience launcher for the large multi-room arena world (`simpleBiggerWorld.sdf`).
 * **Command**:
   ```bash
@@ -218,7 +238,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 ---
 
-#### 8. `gazebo_simpleWorld.launch.py` (`gizmo_gazebo`)
+#### 9. `gazebo_simpleWorld.launch.py` (`gizmo_gazebo`)
 * **Purpose**: Convenience launcher for the compact obstacle testing arena (`simpleWorld.sdf`).
 * **Command**:
   ```bash
@@ -227,7 +247,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 ---
 
-#### 9. `display.launch.py` (`gizmo_description`)
+#### 10. `display.launch.py` (`gizmo_description`)
 * **Purpose**: Kinematic visualization of the URDF robot model in RViz without physics simulation.
 * **Mechanism**: Publishes the static transform tree via `robot_state_publisher` and provides joint state inspection tools.
 * **Command**:
@@ -237,7 +257,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 ---
 
-#### 10. `teleop.launch.py` (`gizmo_teleop`)
+#### 11. `teleop.launch.py` (`gizmo_teleop`)
 * **Purpose**: Velocity command publishing for manual motion testing.
 * **Mechanism**: Converts input commands to clamped `geometry_msgs/msg/Twist` messages published to `/cmd_vel` at $20\text{ Hz}$.
 * **Command**:
@@ -252,6 +272,6 @@ The workspace provides launch pipelines structured across 3 architectural layers
 
 For in-depth mathematical formulations, parameter documentation, and controller tuning:
 1. [Chapter 1: 2D SLAM & SLAM Toolbox](docs/01_slamtoolbox.md): Pose-Graph SLAM, Ceres optimization, scan matching, and lifecycle orchestration.
-2. [Chapter 2: Autonomous Navigation with Nav2](docs/02_nav2.md): 2D Costmaps, Regulated Pure Pursuit, Behavior Tree orchestration, and process composition.
+2. [Chapter 2: Autonomous Navigation with Nav2](docs/02_nav2.md): 2D Costmaps, Regulated Pure Pursuit, Behavior Tree orchestration, and lifecycle server management.
 3. [Chapter 3: Online SLAM Navigation](docs/03_online_slam_nav2.md): Single-parent TF rules, dynamic frontier planning, and multi-stage lifecycle transitions.
 4. [Chapter 4: Nav2 Simple Commander API](docs/04_nav2_simple_commander.md): Programmatic Python missions, `BasicNavigator`, feedback streaming, and YAML waypoint execution.

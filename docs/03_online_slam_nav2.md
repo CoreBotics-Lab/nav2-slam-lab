@@ -136,7 +136,7 @@ graph TD
 1. **`slam_toolbox` Configures & Activates via `lifecycle_manager_slam`:**  
    Immediately takes the robot's starting spot as $(0, 0, 0)$ in the `map` frame and begins broadcasting `map ➔ odom`.
 2. **Costmaps & Nav2 Components Initialize via `lifecycle_manager_navigation`:**  
-   Running inside `nav2_container` (process composition), `controller_server`, `planner_server`, `behavior_server`, `bt_navigator`, and `waypoint_follower` activate sequentially. Because `map ➔ odom` is already live from SLAM, costmaps activate with zero TF timeout errors.
+   Coordinated by `lifecycle_manager_navigation`, `controller_server`, `planner_server`, `behavior_server`, `bt_navigator`, and `waypoint_follower` activate sequentially. Because `map ➔ odom` is already live from SLAM, costmaps activate with zero TF timeout errors.
 3. **Action Servers Stand Up:**  
    `bt_navigator` and `waypoint_follower` connect to `planner_server` and `controller_server`, unlocking the `Nav2 Goal` tool in RViz.
 
