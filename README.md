@@ -17,14 +17,14 @@ pixi run build
 ```bash
 ros2 launch gizmo_bringup simulation.launch.py mode:=localization
 ```
-* When RViz opens, select **2D Goal Pose** on the top toolbar and click any target destination on the map.
+* When RViz opens, select **Nav2 Goal** on the top toolbar and click any target destination on the map.
 * Gizmo computes the global path and navigates using the Regulated Pure Pursuit controller.
 
 ### 3. Online SLAM Mapping and Autonomous Navigation (Mapping Mode)
 ```bash
 ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
 ```
-* When RViz opens, select **2D Goal Pose** on the top toolbar and set a goal into unknown space.
+* When RViz opens, select **Nav2 Goal** on the top toolbar and set a goal into unknown space.
 * Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the map.
 
 ### 4. Autonomous Navigation with Keepout Zones (Costmap Filter)
