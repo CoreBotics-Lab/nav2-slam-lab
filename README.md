@@ -28,7 +28,7 @@ ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
 * Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the map.
 
 ### 4. Autonomous Navigation with Keepout Zones (Costmap Filter)
-Launch navigation with keepout zones enabled via `keepout:=true`:
+Launch navigation with keepout zones enabled via `keepout:=true` (note: keepout zones require a pre-annotated mask and are only used with `mode:=localization`):
 ```bash
 ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=true
 ```
