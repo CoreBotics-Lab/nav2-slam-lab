@@ -123,7 +123,7 @@ def generate_launch_description():
         ),
         DeclareLaunchArgument(
             'keepout',
-            default_value='true',
+            default_value='false',
             description='Whether to activate keepout zones costmap filter'
         ),
         DeclareLaunchArgument(

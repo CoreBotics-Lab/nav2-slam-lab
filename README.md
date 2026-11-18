@@ -28,7 +28,7 @@ ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
 * Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the map.
 
 ### 4. Autonomous Navigation with Keepout Zones (Costmap Filter)
-Launch navigation with keepout zones enabled (enabled by default, explicitly controllable via `keepout`):
+Launch navigation with keepout zones enabled via `keepout:=true`:
 ```bash
 ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=true
 ```
@@ -120,20 +120,20 @@ The workspace provides launch pipelines structured across 3 architectural layers
   1. Spawns the Gazebo physics simulation via `gazebo.launch.py` with the selected world (default `simpleBiggerWorld.sdf`).
   2. Applies a `TimerAction(period=5.0)` delay allowing Gazebo physics, the simulation `/clock`, sensor bridges (`/scan`, `/imu/data`), and EKF odometry (`odom -> base_footprint`) to stabilize.
   3. Includes `bringup.launch.py` with `use_sim_time:=true` in either `localization` or `mapping` mode.
-  4. Automatically activates the costmap keepout filter pipeline when `keepout:=true` (default).
+  4. Activates the costmap keepout filter pipeline when `keepout:=true` (default `false`).
 * **Commands**:
   ```bash
   # Autonomous Navigation with pre-built map (AMCL + Map Server + Nav2):
   ros2 launch gizmo_bringup simulation.launch.py mode:=localization
+
+  # Autonomous Navigation with Keepout Zones enabled:
+  ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=true
 
   # Online SLAM Mapping + Autonomous Navigation (SLAM Toolbox + Nav2):
   ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
 
   # Headless execution (without Gazebo GUI):
   ros2 launch gizmo_bringup simulation.launch.py mode:=localization headless:=true
-
-  # Disable keepout zone costmap filters:
-  ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=false
   ```
 
 ---
@@ -144,7 +144,7 @@ The workspace provides launch pipelines structured across 3 architectural layers
   * Evaluates the `mode` parameter:
     * `mode:=localization`: Includes `localization.launch.py` from `gizmo_navigation` to run `map_server` and `nav2_amcl`.
     * `mode:=mapping`: Includes `slam.launch.py` from `gizmo_mapping` to run `async_slam_toolbox_node`.
-  * Evaluates `keepout`: When `true` (default), includes `costmap_keepout_filter.launch.py` to broadcast the mask and filter info metadata.
+  * Evaluates `keepout`: When `true` (default `false`), includes `costmap_keepout_filter.launch.py` to broadcast the mask and filter info metadata.
   * Includes `navigation.launch.py` to start the Nav2 controller, planner, behavior server, and BT navigator.
   * Launches RViz2 using the unified configuration [`src/gizmo_navigation/rviz/nav2.rviz`](src/gizmo_navigation/rviz/nav2.rviz) with full Nav2 Goal tooling, costmaps, and real-time path visualizers.
 * **Commands**:
