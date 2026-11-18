@@ -2,6 +2,43 @@
 
 An autonomous mobile robotics engineering repository for **2D Graph SLAM**, **Nav2 Autonomous Navigation**, and **Python Mission Automation** on the **Gizmo 2WD Differential Drive Robot** using **ROS 2 Lyrical**.
 
+
+---
+
+## Quickstart Guide
+
+### 1. Build the Workspace
+Build all workspace packages using Pixi:
+```bash
+pixi run build
+```
+
+### 2. Autonomous Navigation with Pre-Built Map (Localization Mode)
+```bash
+ros2 launch gizmo_bringup simulation.launch.py mode:=localization
+```
+* When RViz opens, select **2D Goal Pose** on the top toolbar and click any target destination on the map.
+* Gizmo computes the global path and navigates using the Regulated Pure Pursuit controller.
+
+### 3. Online SLAM Mapping and Autonomous Navigation (Mapping Mode)
+```bash
+ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
+```
+* When RViz opens, select **2D Goal Pose** on the top toolbar and set a goal into unknown space.
+* Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the map.
+
+### 4. Execute Autonomous Waypoint Patrol from Python
+While the navigation stack is active, run the waypoint mission script:
+```bash
+python3 src/gizmo_scripts/gizmo_scripts/practice/waypointFromYaml.py
+```
+
+### 5. Save the Generated Map
+Save the SLAM occupancy grid map to disk:
+```bash
+ros2 run nav2_map_server map_saver_cli -f src/gizmo_mapping/maps/my_new_map
+```
+
 ---
 
 ## Architectural Overview
@@ -208,41 +245,6 @@ The workspace provides launch pipelines structured across 3 architectural layers
   ros2 launch gizmo_teleop teleop.launch.py
   ```
 
----
-
-## Quickstart Guide
-
-### 1. Build the Workspace
-Build all workspace packages using Pixi:
-```bash
-pixi run build
-```
-
-### 2. Autonomous Navigation with Pre-Built Map (Localization Mode)
-```bash
-ros2 launch gizmo_bringup simulation.launch.py mode:=localization
-```
-* When RViz opens, select **2D Goal Pose** on the top toolbar and click any target destination on the map.
-* Gizmo computes the global path and navigates using the Regulated Pure Pursuit controller.
-
-### 3. Online SLAM Mapping and Autonomous Navigation (Mapping Mode)
-```bash
-ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
-```
-* When RViz opens, select **2D Goal Pose** on the top toolbar and set a goal into unknown space.
-* Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the map.
-
-### 4. Execute Autonomous Waypoint Patrol from Python
-While the navigation stack is active, run the waypoint mission script:
-```bash
-python3 src/gizmo_scripts/gizmo_scripts/practice/waypointFromYaml.py
-```
-
-### 5. Save the Generated Map
-Save the SLAM occupancy grid map to disk:
-```bash
-ros2 run nav2_map_server map_saver_cli -f src/gizmo_mapping/maps/my_new_map
-```
 
 ---
 
