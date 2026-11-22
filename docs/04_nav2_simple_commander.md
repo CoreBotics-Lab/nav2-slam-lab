@@ -168,11 +168,11 @@ def waitUntilNav2Active(self, navigator: str = 'bt_navigator',
     # 1. Wait for localizer lifecycle state to be 'active'
     if localizer != 'robot_localization':
         self._waitForNodeToActivate(localizer)
-        
+
     # 2. If AMCL is the localizer, WAIT for initial pose confirmation!
     if localizer == 'amcl':
         self._waitForInitialPose()
-        
+
     # 3. Wait for BT Navigator to be 'active'
     self._waitForNodeToActivate(navigator)
 ```
@@ -261,7 +261,10 @@ A raw $(X, Y)$ coordinate is physically incomplete in robotics. A `PoseStamped` 
 
 ### 📐 2D Yaw Heading to Quaternion Formula:
 For planar ground robots operating on flat floors ($Roll = 0, Pitch = 0$):
-$$q_x = 0, \quad q_y = 0, \quad q_z = \sin\left(\frac{\theta}{2}\right), \quad q_w = \cos\left(\frac{\theta}{2}\right)$$
+
+$$
+q_x = 0, \quad q_y = 0, \quad q_z = \sin\left(\frac{\theta}{2}\right), \quad q_w = \cos\left(\frac{\theta}{2}\right)
+$$
 
 In Python, this is computed via:
 ```python
@@ -354,7 +357,7 @@ elif result == TaskResult.FAILED:
 ---
 
 ## 9. Step-by-Step Execution Guide for Gizmo
- 
+
 ### Option A: Online SLAM Autonomous Navigation (One-Command Bringup)
 1. **Terminal 1: Master Simulation & SLAM Bringup**
    ```bash

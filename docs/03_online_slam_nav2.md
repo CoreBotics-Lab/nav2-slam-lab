@@ -66,7 +66,10 @@ In **Online SLAM Navigation**, `map_server` and `amcl` are **completely removed*
 ## 2. Coordinate Frames & The Dynamic Transform Chain
 
 In both systems, the coordinate hierarchy remains strictly:
-$$\mathbf{map} \longrightarrow \mathbf{odom} \longrightarrow \mathbf{base\_footprint} \longrightarrow \mathbf{scan\_frame}$$
+
+$$
+\mathbf{map} \longrightarrow \mathbf{odom} \longrightarrow \mathbf{base\_footprint} \longrightarrow \mathbf{scan\_frame}
+$$
 
 ```mermaid
 graph LR
@@ -145,7 +148,10 @@ graph TD
 ## 5. The RViz Navigation 2 Panel & UI Binding
 
 In RViz, the bottom-left **Navigation 2 Panel** queries a specific lifecycle service to verify system health:
-$$\mathbf{/lifecycle\_manager\_navigation/is\_active}$$
+
+$$
+\mathbf{/lifecycle\_manager\_navigation/is\_active}
+$$
 
 ```
 If Lifecycle Manager Name == 'lifecycle_manager_navigation' ──► Status: Active (Buttons Enabled: Pause, Cancel, Waypoints)
@@ -221,7 +227,7 @@ After Loop Closure:  Ceres Solver snaps graph nodes into place!
 ---
 
 ## 9. Step-by-Step Launch & Operational Workflow
- 
+
 ### Option A: One-Command End-to-End Bringup (Recommended)
 This master launch file starts Gazebo with `simpleBiggerWorld.sdf`, delays 5.0s for physics/TF stabilization, and automatically boots SLAM + Nav2 + RViz:
 ```bash

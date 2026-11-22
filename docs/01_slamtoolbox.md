@@ -18,7 +18,10 @@ Welcome to the comprehensive reference guide for **2D Simultaneous Localization 
 ## 1. Core Philosophy & The TF Hierarchy
 
 In ROS 2, coordinate frames strictly follow the **Parent $\to$ Child (`A ➔ B`)** convention:
-$$\text{Where is } \mathbf{B} \text{ located with respect to } \mathbf{A}\text{?}$$
+
+$$
+\text{Where is } \mathbf{B} \text{ located with respect to } \mathbf{A}\text{?}
+$$
 
 ```
 [City Origin]   ➔   [Your Neighborhood]   ➔   [Your Body]        ➔   [Your Eyes]
@@ -40,7 +43,9 @@ graph LR
 
 When the wheels slip, the virtual paper (`odom`) slides and drifts away from the real room. **SLAM does not rewrite the wheel odometry counters.** Instead, SLAM computes the offset **`map ➔ odom`** (virtually shifting the sheet of paper) so that the final position:
 
-$$\text{Pose}(\text{Robot in Map}) = (\mathbf{T}_{\text{map} \rightarrow \text{odom}}) \times (\mathbf{T}_{\text{odom} \rightarrow \text{base}})$$
+$$
+\text{Pose}(\text{Robot in Map}) = (\mathbf{T}_{\text{map} \rightarrow \text{odom}}) \times (\mathbf{T}_{\text{odom} \rightarrow \text{base}})
+$$
 
 remains **100% accurate** in the real world!
 
@@ -51,14 +56,23 @@ At the exact timestamp $t = 0$ when `slam_toolbox` is configured and activated, 
 Suppose:
 1. You launch Gazebo $\rightarrow$ `odom` frame origin is created at $(0, 0, 0)$.
 2. You drive Gizmo forward by **$+1.0\text{ meter}$** using teleop:
-   $$\mathbf{T}_{\text{odom} \rightarrow \text{base}} = (+1.0, 0.0, 0.0)$$
+
+$$
+\mathbf{T}_{\text{odom} \rightarrow \text{base}} = (+1.0, 0.0, 0.0)
+$$
+
 3. **Now, you launch `slam_toolbox`:**
    - SLAM declares: *"Where the robot is standing right now is my `map` $(0, 0, 0)$ origin!"*
    - Therefore, the robot's pose in the map must be $(0.0, 0.0, 0.0)$.
    - To make the TF math align, SLAM automatically sets the **`map ➔ odom`** offset to **$(-1.0, 0.0, 0.0)$**:
 
-$$\text{Pose}(\text{Robot in Map}) = (\mathbf{T}_{\text{map} \rightarrow \text{odom}}) + (\mathbf{T}_{\text{odom} \rightarrow \text{base}})$$
-$$\text{Pose}(\text{Robot in Map}) = (-1.0) + (+1.0) = \mathbf{(0.0, 0.0, 0.0)}$$
+$$
+\text{Pose}(\text{Robot in Map}) = (\mathbf{T}_{\text{map} \rightarrow \text{odom}}) + (\mathbf{T}_{\text{odom} \rightarrow \text{base}})
+$$
+
+$$
+\text{Pose}(\text{Robot in Map}) = (-1.0) + (+1.0) = \mathbf{(0.0, 0.0, 0.0)}
+$$
 
 ```
 [map origin (0,0)] = (Where you launched SLAM)
@@ -84,7 +98,9 @@ SLAM Toolbox is an **Exact 2D Pose-Graph SLAM** system. It models the mapping pr
 
 Whenever a loop closure or new scan match occurs, Google **Ceres Solver** solves the non-linear least-squares optimization problem:
 
-$$\min_{X} \sum_{ij} \mathbf{e}_{ij}(X_i, X_j)^T \boldsymbol{\Omega}_{ij} \mathbf{e}_{ij}(X_i, X_j)$$
+$$
+\min_{X} \sum_{ij} \mathbf{e}_{ij}(X_i, X_j)^T \boldsymbol{\Omega}_{ij} \mathbf{e}_{ij}(X_i, X_j)
+$$
 
 where $\mathbf{e}_{ij}$ is the error vector between the predicted transformation and the laser scan observation, weighted by the information (confidence) matrix $\boldsymbol{\Omega}_{ij}$.
 
@@ -222,12 +238,23 @@ World Coordinates (-4.5m, -3.2m)
 ### 📐 The Pixel-to-World Translation Formula:
 For any pixel at coordinate $(u, v)$ (where $u$ is column index from the left, $v$ is row index from the bottom):
 
-$$\mathbf{X_{\text{world}}} = \text{origin}[0] + (u \times \text{resolution})$$
-$$\mathbf{Y_{\text{world}}} = \text{origin}[1] + (v \times \text{resolution})$$
+$$
+\mathbf{X_{\text{world}}} = \text{origin}[0] + (u \times \text{resolution})
+$$
+
+$$
+\mathbf{Y_{\text{world}}} = \text{origin}[1] + (v \times \text{resolution})
+$$
 
 ### 🎯 Finding the Robot's Starting Pose Pixel $(0,0)$ in the Image:
-$$\text{Pixel } X = \frac{0.0 - (-4.5)}{0.05} = \frac{4.5}{0.05} = \mathbf{90\text{ pixels from the left}}$$
-$$\text{Pixel } Y = \frac{0.0 - (-3.2)}{0.05} = \frac{3.2}{0.05} = \mathbf{64\text{ pixels from the bottom}}$$
+
+$$
+\text{Pixel } X = \frac{0.0 - (-4.5)}{0.05} = \frac{4.5}{0.05} = \mathbf{90\text{ pixels from the left}}
+$$
+
+$$
+\text{Pixel } Y = \frac{0.0 - (-3.2)}{0.05} = \frac{3.2}{0.05} = \mathbf{64\text{ pixels from the bottom}}
+$$
 
 ### 💡 Fun Fact: What happens if you edit the image?
 * **Adding pixels to TOP or RIGHT:** Pixel $(0,0)$ does not move $\rightarrow$ `origin` in `.yaml` **stays identical**.
