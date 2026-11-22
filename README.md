@@ -58,10 +58,27 @@ ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=true
 </p>
 
 ### 5. Execute Autonomous Waypoint Patrol from Python
-While the navigation stack is active, run the waypoint mission script:
-```bash
-ros2 run gizmo_scripts waypointFromYaml
-```
+*Note: The waypoint mission script relies on the Nav2 Simple Commander API (`BasicNavigator`) and requires the navigation stack to be running.*
+
+1. **Terminal 1: Start the Navigation Stack** (Localization Mode):
+   ```bash
+   ros2 launch gizmo_bringup simulation.launch.py mode:=localization
+   ```
+
+2. **Terminal 2: Run the Waypoint Mission Script**:
+   Once the navigation stack and RViz are fully initialized, execute:
+   ```bash
+   ros2 run gizmo_scripts waypointFromYaml
+   ```
+* Gizmo parses the sequential poses defined in `justSimpleBiggerWorldPose.yaml`, autonomously navigating to each target waypoint before rotating to the specified goal orientation.
+
+<p align="center">
+  <img src="media/04_python_waypoint_patrol.gif" alt="Gizmo Autonomous Waypoint Patrol via Nav2 Simple Commander" width="100%">
+  <br>
+  <em>Figure 4: Autonomous Multi-Waypoint Patrol via Python. Demonstrating mission orchestration using the Nav2 Simple Commander API (<code>BasicNavigator</code>). Gizmo sequentially navigates through predefined waypoints loaded from YAML, performing precision in-place alignment to goal orientations across the environment.</em>
+</p>
+
+* **Automated Mapping Exploration**: It is also possible to execute waypoint missions during **Mapping Mode** (`ros2 launch gizmo_bringup simulation.launch.py mode:=mapping`) to automate systematic area coverage while SLAM Toolbox builds the map. When running with mapping mode, switch the lifecycle check in `waypointFromYaml.py` to `localizer='slam_toolbox'`.
 
 ---
 
