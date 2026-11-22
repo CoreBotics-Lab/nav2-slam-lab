@@ -13,26 +13,49 @@ Build all workspace packages using Pixi:
 pixi run build
 ```
 
-### 2. Autonomous Navigation with Pre-Built Map (Localization Mode)
+### 2. Online SLAM Mapping and Autonomous Navigation (Mapping Mode)
+```bash
+ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
+```
+* When RViz opens, select **Nav2 Goal** on the top toolbar and set a goal into unknown space.
+* Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the occupancy grid map.
+* *(Optional)* A pre-built map is already provided with the package; to save a newly generated map after exploration:
+  ```bash
+  ros2 run nav2_map_server map_saver_cli -f src/gizmo_mapping/maps/simple_bigger_world_map
+  ```
+
+<p align="center">
+  <img src="media/01_online_slam_mapping.gif" alt="Gizmo Online SLAM Mapping and Frontier Exploration" width="100%">
+  <br>
+  <em>Figure 1: Online 2D SLAM Mapping with SLAM Toolbox. Frontier exploration driven by Nav2 Goal dispatch in RViz while the Karto-based graph SLAM solver dynamically optimizes scan matches and expands the occupancy grid into unknown space.</em>
+</p>
+
+### 3. Autonomous Navigation with Pre-Built Map (Localization Mode)
 ```bash
 ros2 launch gizmo_bringup simulation.launch.py mode:=localization
 ```
 * When RViz opens, select **Nav2 Goal** on the top toolbar and click any target destination on the map.
 * Gizmo computes the global path and navigates using the Regulated Pure Pursuit controller.
 
-### 3. Online SLAM Mapping and Autonomous Navigation (Mapping Mode)
-```bash
-ros2 launch gizmo_bringup simulation.launch.py mode:=mapping
-```
-* When RViz opens, select **Nav2 Goal** on the top toolbar and set a goal into unknown space.
-* Gizmo explores the frontier while SLAM Toolbox incrementally expands and optimizes the map.
+<p align="center">
+  <img src="media/02_localization_navigation.gif" alt="Gizmo Nav2 Autonomous Navigation in Localization Mode" width="100%">
+  <br>
+  <em>Figure 2: Autonomous Point-to-Point Navigation in Localization Mode. AMCL particle filter localizes the robot against the pre-built <code>simple_bigger_world_map</code>, NavFn computes the collision-free global path, and the Regulated Pure Pursuit (RPP) controller tracks the trajectory to the target pose.</em>
+</p>
 
 ### 4. Autonomous Navigation with Keepout Zones (Costmap Filter)
 Launch navigation with keepout zones enabled via `keepout:=true` (note: keepout zones require a pre-annotated mask and are only used with `mode:=localization`):
 ```bash
 ros2 launch gizmo_bringup simulation.launch.py mode:=localization keepout:=true
 ```
-* When setting navigation goals near restricted zones, the costmap inflation layer inflates the keepout boundaries, safely routing the planner and controller around restricted areas.
+* When RViz opens, select **Nav2 Goal** on the top toolbar and click a target destination across or adjacent to the restricted zone.
+* The costmap filter inflation layer treats keepout boundaries as lethal obstacles, compelling the global planner and controller to safely route around the restricted area.
+
+<p align="center">
+  <img src="media/03_keepout_zone_navigation.gif" alt="Gizmo Costmap Filter Keepout Zone Avoidance" width="100%">
+  <br>
+  <em>Figure 3: Costmap Filter Keepout Zone Avoidance. Costmap filter mask enforces spatial restrictions by inflating virtual obstacle boundaries around restricted zones, compelling the NavFn global planner and RPP controller to detour safely around the prohibited perimeter.</em>
+</p>
 
 ### 5. Execute Autonomous Waypoint Patrol from Python
 While the navigation stack is active, run the waypoint mission script:
